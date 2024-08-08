@@ -4,7 +4,7 @@ const createStudentCollection = require("../Models/studentModel");
 const updateAttendance = async (req, res) => {
 	const { coursecode, coursename, facname, date, hr, attendance } = req.body;
 
-	if (!coursecode || !coursename || !facname || !date || !hr || !attendance) {
+	if (!coursecode || !coursename || !date || !hr || !attendance) {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
@@ -18,7 +18,7 @@ const updateAttendance = async (req, res) => {
 		if (!report) {
 			// If report does not exist, create a new one
 			const newReport = new ReportCollection({
-				faculty: facname,
+				faculty: req.user.id,
 				coursename,
 				coursecode,
 				date,
@@ -63,8 +63,8 @@ const updateAttendance = async (req, res) => {
 // initial data fetch for a date, for a course
 const fetchData = async (req, res) => {
 	const { date, coursecode, coursename, hr } = req.body;
-	const { username } = req.user;
-
+	const { id } = req.user;
+	console.log("@fetchData", date, coursecode, coursename, hr, id);
 	try {
 		// Fetch students data from the dynamically created collection
 		const StudentCollection = createStudentCollection(coursecode);
@@ -73,7 +73,7 @@ const fetchData = async (req, res) => {
 
 		// Fetch the attendance report for the specified course and date
 		const ReportCollection = createReportCollection(coursecode);
-		let reports = await ReportCollection.findOne({ date });
+		let reports = await ReportCollection.findOne({ date, hr });
 
 		if (!reports) {
 			// Create a new report document if not found
@@ -85,7 +85,7 @@ const fetchData = async (req, res) => {
 			}));
 
 			reports = new ReportCollection({
-				faculty: username,
+				faculty: id,
 				coursename,
 				coursecode,
 				date,
@@ -103,9 +103,9 @@ const fetchData = async (req, res) => {
 			);
 			return {
 				RegNo: student.RegNo,
-				Name: student.Name,
-				Status: attendance ? attendance.status : 1,
-				Freeze: attendance ? attendance.freeze : false,
+				Name: student.StdName,
+				status: attendance ? attendance.status : 1,
+				freeze: attendance ? attendance.freeze : false,
 			};
 		});
 
@@ -119,7 +119,7 @@ const fetchData = async (req, res) => {
 
 const studentDashboard = async (req, res) => {
 	try {
-		const { startDate, endDate, coursecode } = req.query;
+		const { startDate, endDate, coursecode } = req.body;
 
 		if (!coursecode) {
 			return res.status(400).json({ error: "Course code is required" });

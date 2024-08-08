@@ -12,6 +12,27 @@ const Class = require("../Models/courseModel");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
+// Get the faculty data - coursecode, coursename, and student details
+router.get("/faculty-data", authenticateToken, async (req, res) => {
+	try {
+		const { id } = req.user;
+		console.log("@faculty-data", id);
+		const data = await Class.find({ faculty: id });
+		console.log(data);
+		const yr = data.map((d) => d.dept);
+		const dept = data.map((d) => d.class);
+		const course = data.map(({ coursecode, coursename }) => ({
+			coursecode,
+			coursename,
+		}));
+		console.log(yr, dept, course);
+		res.status(200).json({ data: data, course: course, dept, yr });
+	} catch (err) {
+		console.log(err);
+		res.status(500).send("Server Error");
+	}
+});
+
 // Fetch all students for a specific course
 router.get("/:coursecode", authenticateToken, async (req, res) => {
 	const { coursecode } = req.params;
@@ -24,22 +45,6 @@ router.get("/:coursecode", authenticateToken, async (req, res) => {
 		res.json(students);
 	} catch (error) {
 		console.error("Error fetching students:", error);
-		res.status(500).send("Server Error");
-	}
-});
-
-// Get the faculty data - coursecode, coursename, and student details
-router.get("/faculty-data", authenticateToken, async (req, res) => {
-	try {
-		const { username } = req.user;
-		const data = await Class.find({ faculty: username });
-		const course = data.map(({ coursecode, coursename }) => ({
-			coursecode,
-			coursename,
-		}));
-		res.status(200).json(course);
-	} catch (err) {
-		console.log(err);
 		res.status(500).send("Server Error");
 	}
 });
@@ -58,7 +63,7 @@ router.post(
 			class: courseClass,
 		} = req.body;
 		const file = req.file;
-
+		console.log(req.user.id);
 		if (!file) {
 			return res.status(400).json({ message: "CSV file is required" });
 		}
@@ -68,7 +73,7 @@ router.post(
 			const courseData = {
 				coursename,
 				coursecode,
-				faculty: facname,
+				faculty: req.user.id,
 				class: courseClass,
 				dept: year,
 				students: [],
@@ -85,7 +90,7 @@ router.post(
 			fs.createReadStream(file.path)
 				.pipe(csv())
 				.on("data", (row) => {
-					students.push({ RegNo: row.regNo, StdName: row.stdName });
+					students.push({ RegNo: row.RegNo, StdName: row.StdName });
 				})
 				.on("end", async () => {
 					try {

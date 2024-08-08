@@ -11,7 +11,7 @@ const authenticateToken = require("../Middleware/middleware");
 // Update attendance data
 router.post("/update", authenticateToken, updateAttendance);
 
-router.get("/student-dashboard", authenticateToken, studentDashboard);
+router.post("/student-dashboard", authenticateToken, studentDashboard);
 
 router.post("/getDashboardData", authenticateToken, FinalStudentData);
 // Fetch attendance data for a specific date

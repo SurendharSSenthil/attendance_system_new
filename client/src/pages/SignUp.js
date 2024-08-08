@@ -1,10 +1,11 @@
-import React from "react";
-import { Button, Form, Input, Card, message } from "antd";
-import { LoginOutlined } from "@ant-design/icons";
+import React, { useEffect } from "react";
+// import { AuthForm } from "../components/AuthForm";
 import { useNavigate } from "react-router-dom";
 import { url } from "../Backendurl";
+import { message, Button, Form, Input, Card } from "antd";
+import { LoginOutlined } from "@ant-design/icons";
 
-export const AuthForm = ({ setAuth, setUser }) => {
+const Auth = ({ setAuth, setUser }) => {
 	const navigate = useNavigate();
 
 	const onFinishFailed = (errorInfo) => {
@@ -13,40 +14,43 @@ export const AuthForm = ({ setAuth, setUser }) => {
 
 	const onFinish = async (values) => {
 		try {
-			if (!values.username || !values.password) {
-				message.error("Please enter both username and password!");
-				return;
-			}
-
-			const res = await fetch(`${url}/admin/login`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify(values),
-			});
-
-			const data = await res.json();
-
-			if (res.ok) {
-				// Successful login
-				localStorage.setItem("token", data.token);
-				localStorage.setItem("user", JSON.stringify(data.user));
-				message.success("Logged in successfully");
-				setAuth(true);
-				setUser(data.user);
-				navigate("/");
+			if (values.username === "" || values.password === "") {
+				message.error("Please enter the username and password!");
 			} else {
-				// Authentication failed
-				message.error(data.message || "Authentication failed");
-				setAuth(false);
+				const res = await fetch(`${url}/admin/register`, {
+					method: "POST",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(values),
+				});
+				const data = await res.json();
+				console.log(data);
+				if (res.ok) {
+					// If authentication is successful, set the JWT token in localStorage
+					localStorage.setItem("token", data.token);
+					localStorage.setItem("user", data.user);
+					message.success("Logged in successfully");
+					// Update the state to indicate that the user is authenticated
+					setAuth(true);
+					setUser(data.user);
+					console.log("@AuthForm", data.user);
+					// Navigate to the Home page
+					navigate("/register-faculty");
+				} else {
+					// If authentication fails, display an error message
+					message.error(data.message || "Authentication failed");
+					// Update the state to indicate that the user is not authenticated
+					setAuth(false);
+				}
 			}
 		} catch (err) {
-			message.error("An error occurred. Please try again.");
-			console.error("Login error:", err);
+			message.error("Wrong Details");
 		}
 	};
-
+	useEffect(() => {
+		document.title = "ATTENDANCE SYSTEM | REGISTER";
+	});
 	return (
 		<div className="flex justify-center items-center min-h-screen p-4">
 			<Card className="shadow-lg" style={{ width: "100%", maxWidth: "400px" }}>
@@ -59,7 +63,7 @@ export const AuthForm = ({ setAuth, setUser }) => {
 					}}
 				>
 					<LoginOutlined style={{ marginRight: "8px" }} />
-					Sign In
+					Sign Up
 				</h2>
 				<Form
 					name="basic"
@@ -87,8 +91,8 @@ export const AuthForm = ({ setAuth, setUser }) => {
 					</Form.Item>
 
 					<div className="text-center">
-						<a href="/register" className="text-blue-500">
-							Don't have an account? Sign up here!
+						<a href="/auth" className="text-blue-500">
+							Already have an account? Login here!
 						</a>
 					</div>
 
@@ -103,4 +107,4 @@ export const AuthForm = ({ setAuth, setUser }) => {
 	);
 };
 
-export default AuthForm;
+export default Auth;

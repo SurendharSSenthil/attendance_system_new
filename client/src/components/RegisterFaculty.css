@@ -1,0 +1,76 @@
+.register-faculty {
+	padding: 20px;
+	background: linear-gradient(to right, #f8f9fa, #e9ecef);
+	min-height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.register-faculty-card {
+	animation: fadeInUp 1s ease;
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+	border-radius: 10px;
+	overflow: hidden;
+}
+
+.header-image {
+	width: 100%;
+	height: auto;
+	margin-bottom: 20px;
+	animation: fadeInDown 1s ease;
+}
+
+@keyframes fadeInUp {
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+@keyframes fadeInDown {
+	from {
+		opacity: 0;
+		transform: translateY(-20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
+}
+
+.ant-card {
+	background: #ffffff;
+	border-radius: 10px;
+}
+
+.ant-card-head {
+	background: #f0f2f5;
+	border-radius: 10px 10px 0 0;
+	text-align: center;
+}
+
+.ant-card-head-title {
+	font-size: 24px;
+	font-weight: bold;
+	color: #333;
+}
+
+.ant-card-body {
+	padding: 20px;
+}
+
+.ant-btn-primary {
+	background: #4d4dff;
+	border-color: #4d4dff;
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+	background: #3a3aff;
+	border-color: #3a3aff;
+}

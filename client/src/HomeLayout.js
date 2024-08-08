@@ -12,7 +12,7 @@ const HomeLayout = ({ setAuth, user }) => {
 			<Sidebar style={{ position: "fixed" }} />
 			<Layout>
 				<AppHeader setAuth={setAuth} user={user} />
-				<Content style={{ padding: "16px", marginTop: "80px" }}>
+				<Content style={{ padding: "16px", marginTop: "20px" }}>
 					<Outlet />
 				</Content>
 				<Footer style={{ textAlign: "center" }}>

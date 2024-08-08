@@ -1,10 +1,16 @@
 const mongoose = require("mongoose");
 
 const createReportCollection = (courseCode) => {
+	// Check if the model already exists
+	const modelName = `reports_${courseCode}`;
+	if (mongoose.models[modelName]) {
+		return mongoose.models[modelName];
+	}
+
 	const reportSchema = new mongoose.Schema({
 		faculty: {
 			type: mongoose.Schema.Types.ObjectId,
-			ref: "Admin",
+			// ref: "Admin",
 			required: true,
 		},
 		coursename: {
@@ -25,7 +31,7 @@ const createReportCollection = (courseCode) => {
 		},
 		attendance: [
 			{
-				RegNo: { type: mongoose.Schema.Types.ObjectId },
+				RegNo: { type: String },
 				Name: { type: String },
 				status: { type: Number, required: true },
 				freeze: { type: Boolean, required: true },
@@ -33,7 +39,8 @@ const createReportCollection = (courseCode) => {
 		],
 	});
 
-	return mongoose.model(`reports_${courseCode}`, reportSchema);
+	// Create and return the model
+	return mongoose.model(modelName, reportSchema);
 };
 
 module.exports = createReportCollection;

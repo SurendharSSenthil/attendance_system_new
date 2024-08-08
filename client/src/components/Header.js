@@ -1,7 +1,7 @@
 import React from "react";
 import { Layout, Menu, Dropdown, Typography } from "antd";
 import { UserOutlined, LogoutOutlined } from "@ant-design/icons";
-
+import { useNavigate } from "react-router-dom";
 const { Header } = Layout;
 const { Text } = Typography;
 
@@ -12,10 +12,10 @@ const AppHeader = ({ setAuth, user }) => {
 		localStorage.removeItem("user");
 		setAuth(false);
 	};
-
+	const navigate = useNavigate();
 	const menu = (
 		<Menu>
-			<Menu.Item key="0" onClick={handleLogout}>
+			<Menu.Item key="0" onClick={handleLogout} className="hover:bg-blue-500">
 				<LogoutOutlined />
 				Logout
 			</Menu.Item>
@@ -23,16 +23,33 @@ const AppHeader = ({ setAuth, user }) => {
 	);
 
 	return (
-		<Header className="bg-white flex justify-between items-center h-[60px] w-full fixed p-4 shadow-md z-50">
+		<Header className="bg-white flex justify-between items-center h-[60px] p-4 shadow-md z-50">
 			<Text className="text-lg font-semibold">Attendance Manager</Text>
-			<Dropdown overlay={menu} placement="bottomLeft" arrow trigger={["click"]}>
-				<a className="ant-dropdown-link" onClick={(e) => e.preventDefault()}>
-					<UserOutlined className="text-black" style={{ fontSize: "16px" }} />
-					{/* <span className="truncate max-w-[150px] text-black">
+			<div className="flex flex-row justify-between items-center gap-8">
+				<button
+					type="button"
+					onClick={() => navigate("/register-faculty")}
+					className="relative py-0 px-4 h-10 rounded-lg transition-all duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50 focus:bg-white focus:text-blue-500 focus:border-blue-500 focus:shadow-md focus:shadow-blue-500/50 outline-none flex flex-row justify-center items-center font-semibold"
+				>
+					+ Course
+				</button>
+				<Dropdown
+					overlay={menu}
+					placement="bottomLeft"
+					arrow
+					trigger={["click"]}
+				>
+					<a className="ant-dropdown-link" onClick={(e) => e.preventDefault()}>
+						<UserOutlined
+							className="text-black hover:text-blue-500"
+							style={{ fontSize: "16px" }}
+						/>
+						{/* <span className="truncate max-w-[150px] text-black">
 						{user?.name}
 					</span> */}
-				</a>
-			</Dropdown>
+					</a>
+				</Dropdown>
+			</div>
 		</Header>
 	);
 };
