@@ -8,53 +8,25 @@ const AttendanceTable = ({
 	currDate,
 	data,
 	setData,
-	setCount,
 	setLoading,
 	loading,
 	hr,
 	course,
 	yr,
 	Class,
+	fetchAttendance,
 }) => {
 	const [localData, setLocalData] = useState(data);
 	const [error, setError] = useState(null);
 
-	const fetchAttendance = async () => {
-		setLoading(true);
-		try {
-			const response = await fetch(`${url}/attendance/get-attendance`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					Authorization: `Bearer ${localStorage.getItem("token")}`,
-				},
-				body: JSON.stringify({
-					date: currDate,
-					coursecode: course,
-					coursename: course,
-					hr,
-				}),
-			});
-			const result = await response.json();
-			console.log(result.reports);
-			if (response.ok) {
-				setLocalData(result.reports);
-				setCount(result.count);
-			} else {
-				setError(result.message || "Failed to fetch data.");
-			}
-		} catch (err) {
-			setError("An error occurred while fetching attendance data.");
-			console.error(err);
-		} finally {
-			setLoading(false);
-		}
-	};
+	useEffect(() => {
+		setLocalData(data);
+		console.log("Local Data Set:", data); // Debugging Log
+	}, [data]);
 
 	const handleSave = async () => {
 		setLoading(true);
 		try {
-			// Set freeze flag to true for all records before saving
 			const updatedData = localData.map((record) => ({
 				...record,
 				freeze: true,
@@ -71,45 +43,42 @@ const AttendanceTable = ({
 					coursecode: course,
 					coursename: course,
 					hr,
-					attendance: updatedData, // Use updatedData with freeze set to true
+					attendance: updatedData,
 				}),
 			});
 			const result = await response.json();
-			if (!response.ok) {
-				setError(result.message || "Failed to update attendance.");
+
+			if (response.ok) {
+				setData(updatedData);
+				setError(null);
 			} else {
-				console.log("Attendance updated successfully");
-				fetchAttendance();
+				setError(result.message || "Failed to update attendance data.");
 			}
 		} catch (err) {
-			setError("An error occurred while updating attendance.");
+			setError("An error occurred while saving attendance data.");
 			console.error(err);
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	const handleStatusChange = (value, RegNo) => {
-		const newData = localData.map((record) =>
-			record.RegNo === RegNo ? { ...record, status: value } : record
+	const handleAttendanceChange = (value, RegNo) => {
+		setLocalData((prevData) =>
+			prevData.map((record) =>
+				record.RegNo === RegNo ? { ...record, status: value } : record
+			)
 		);
-		setLocalData(newData);
 	};
-
-	useEffect(() => {
-		if (course && currDate) {
-			fetchAttendance();
-		}
-	}, [course, currDate, hr]);
 
 	const columns = [
 		{
-			title: "Reg No",
+			title: "Roll Number",
 			dataIndex: "RegNo",
 			key: "RegNo",
+			fixed: "left",
 		},
 		{
-			title: "Name",
+			title: "Student Name",
 			dataIndex: "Name",
 			key: "Name",
 		},
@@ -140,12 +109,12 @@ const AttendanceTable = ({
 					return (
 						<Select
 							value={record.status}
-							onChange={(value) => handleStatusChange(value, record.RegNo)}
-							className={
+							onChange={(value) => handleAttendanceChange(value, record.RegNo)}
+							status={
 								record.status === -1
-									? "border-red-500"
+									? "error"
 									: record.status === 2
-									? "border-yellow-500"
+									? "warning"
 									: ""
 							}
 						>
@@ -162,19 +131,27 @@ const AttendanceTable = ({
 	return (
 		<div>
 			{loading ? (
-				<Spin tip="Loading..." />
+				<Spin />
 			) : (
 				<>
+					{error && <p style={{ color: "red" }}>{error}</p>}
 					<Table
-						dataSource={localData}
 						columns={columns}
-						rowKey="RegNo"
-						bordered
+						dataSource={localData}
+						rowKey={(record) => record._id}
 						pagination={false}
+						className="overflow-x-scroll"
 					/>
-					<Button type="primary" onClick={handleSave} style={{ marginTop: 16 }}>
-						Save Attendance
-					</Button>
+					{localData.length > 0 && localData[0].freeze === false && (
+						<Button
+							type="primary"
+							onClick={handleSave}
+							className="mt-4"
+							disabled={loading}
+						>
+							Save Attendance
+						</Button>
+					)}
 				</>
 			)}
 		</div>

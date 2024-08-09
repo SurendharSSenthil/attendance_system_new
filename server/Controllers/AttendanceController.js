@@ -64,7 +64,7 @@ const updateAttendance = async (req, res) => {
 const fetchData = async (req, res) => {
 	const { date, coursecode, coursename, hr } = req.body;
 	const { id } = req.user;
-	console.log("@fetchData", date, coursecode, coursename, hr, id);
+
 	try {
 		// Fetch students data from the dynamically created collection
 		const StudentCollection = createStudentCollection(coursecode);
@@ -80,7 +80,7 @@ const fetchData = async (req, res) => {
 			const attendance = students.map((student) => ({
 				RegNo: student.RegNo,
 				Name: student.StdName,
-				status: 1,
+				status: 1, // Assuming 1 means present
 				freeze: false,
 			}));
 
@@ -96,11 +96,18 @@ const fetchData = async (req, res) => {
 			await reports.save();
 		}
 
-		// Prepare the attendance data
+		// Prepare the attendance data and count absentees
+		let absenteeCount = 0;
 		const attendanceData = students.map((student) => {
 			const attendance = reports.attendance.find(
 				(a) => a.RegNo === student.RegNo
 			);
+
+			// Check if the student is absent (status = -1)
+			if (attendance && attendance.status === -1) {
+				absenteeCount++;
+			}
+
 			return {
 				RegNo: student.RegNo,
 				Name: student.StdName,
@@ -110,7 +117,11 @@ const fetchData = async (req, res) => {
 		});
 
 		console.log("@fetchData", attendanceData);
-		res.status(200).json({ reports: attendanceData, count: students_count });
+		res.status(200).json({
+			reports: attendanceData,
+			count: students_count,
+			absentees: absenteeCount, // Include the number of absentees in the response
+		});
 	} catch (error) {
 		console.error("Error fetching attendance data:", error);
 		res.status(500).json({ message: "Failed to fetch attendance data." });
@@ -205,6 +216,7 @@ const studentDashboard = async (req, res) => {
 
 const FinalStudentData = async (req, res) => {
 	const { RegNo, startDate, endDate, coursecode } = req.body;
+	console.log(RegNo, startDate, endDate, coursecode);
 
 	try {
 		// Determine the dynamic report collection based on coursecode
@@ -218,7 +230,7 @@ const FinalStudentData = async (req, res) => {
 						$gte: new Date(startDate),
 						$lte: new Date(endDate),
 					},
-					"attendance.RegNo": mongoose.Types.ObjectId(RegNo),
+					"attendance.RegNo": RegNo,
 				},
 			},
 			{
@@ -226,13 +238,12 @@ const FinalStudentData = async (req, res) => {
 			},
 			{
 				$match: {
-					"attendance.RegNo": mongoose.Types.ObjectId(RegNo),
+					"attendance.RegNo": "RegNo",
 				},
 			},
 			{
 				$group: {
 					_id: {
-						course: "$coursecode",
 						RegNo: "$attendance.RegNo",
 						Name: "$attendance.Name",
 					},
@@ -256,7 +267,7 @@ const FinalStudentData = async (req, res) => {
 					name: { $first: "$_id.Name" },
 					data: {
 						$push: {
-							course: "$_id.course",
+							// course: "$_id.course",
 							present: "$present",
 							totalHours: "$totalHours",
 						},

@@ -29,11 +29,13 @@ const Dashboard = () => {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
 				},
 				body: JSON.stringify({
 					RegNo,
 					startDate: startDate.format("YYYY-MM-DD"),
 					endDate: endDate.format("YYYY-MM-DD"),
+					coursecode: "22spc202",
 				}),
 			});
 
