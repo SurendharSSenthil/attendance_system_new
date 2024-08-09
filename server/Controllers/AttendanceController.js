@@ -62,9 +62,9 @@ const updateAttendance = async (req, res) => {
 
 // initial data fetch for a date, for a course
 const fetchData = async (req, res) => {
-	const { date, coursecode, coursename, hr } = req.body;
+	const { date, coursecode, coursename, hr, yr, Class } = req.body;
 	const { id } = req.user;
-
+	console.log(hr, yr, Class);
 	try {
 		// Fetch students data from the dynamically created collection
 		const StudentCollection = createStudentCollection(coursecode);

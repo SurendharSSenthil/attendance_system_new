@@ -19,6 +19,6 @@ app.use("/api/students", facultyRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/admin", adminRoutes);
 
-// app.get("/", console.log("Hello world"));
+// app.get("/api", console.log("Hello world"));
 
 app.listen(port, () => console.log(`Server started on port ${port}`));

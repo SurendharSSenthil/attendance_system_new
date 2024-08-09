@@ -50,6 +50,7 @@ const AttendanceTable = ({
 
 			if (response.ok) {
 				setData(updatedData);
+				fetchAttendance();
 				setError(null);
 			} else {
 				setError(result.message || "Failed to update attendance data.");

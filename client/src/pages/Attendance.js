@@ -71,6 +71,8 @@ const Attendance = () => {
 					coursecode: course,
 					coursename: course,
 					hr,
+					yr,
+					Class,
 				}),
 			});
 			const result = await response.json();
