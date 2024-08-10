@@ -139,6 +139,8 @@ const studentDashboard = async (req, res) => {
 
 		// Dynamically get the Report collection for the given coursecode
 		const ReportCollection = createReportCollection(coursecode);
+		console.log(coursecode);
+		console.log(ReportCollection);
 
 		// Perform aggregation to fetch and calculate attendance data
 		const result = await ReportCollection.aggregate([
@@ -155,7 +157,7 @@ const studentDashboard = async (req, res) => {
 			},
 			{
 				$match: {
-					"attendance.status": { $in: [1, 2] },
+					"attendance.freeze": { $eq: true },
 				},
 			},
 			{

@@ -113,17 +113,22 @@ const Students = () => {
 			setStartDate(moment().startOf("day"));
 			setEndDate(moment().endOf("day"));
 		}
+		console.log(dates);
 	};
 
 	const exportToCSV = () => {
 		const header = [
 			"Registration Number",
 			"Student Name",
+			"Total hours",
+			"Present",
 			...data[0].courses.map((course) => course.course),
 		];
 		const rows = data.map((student) => [
 			student.RegNo,
 			student.name,
+			...student.courses.map((course) => course.totalHours),
+			...student.courses.map((course) => course.present),
 			...student.courses.map((course) =>
 				Math.round((course.present * 100) / course.totalHours)
 			),
@@ -148,7 +153,33 @@ const Students = () => {
 		},
 		...(data.length > 0 && data[0].courses
 			? data[0].courses.map((course) => ({
-					title: course.course,
+					title: "Total Hours",
+					dataIndex: course.totalHours,
+					key: course.totalHours,
+					render: (_, record) => {
+						const courseData = record.courses.find(
+							(c) => c.course === course.course
+						);
+						return <span>{courseData ? courseData.totalHours : 0}</span>;
+					},
+			  }))
+			: []),
+		...(data.length > 0 && data[0].courses
+			? data[0].courses.map((course) => ({
+					title: "Present Hours",
+					dataIndex: course.present,
+					key: course.present,
+					render: (_, record) => {
+						const courseData = record.courses.find(
+							(c) => c.course === course.course
+						);
+						return <span>{courseData ? courseData.present : 0}</span>;
+					},
+			  }))
+			: []),
+		...(data.length > 0 && data[0].courses
+			? data[0].courses.map((course) => ({
+					title: "Percentage",
 					dataIndex: course.course,
 					key: course.course,
 					render: (_, record) => {
@@ -177,9 +208,9 @@ const Students = () => {
 
 	return (
 		<div className="p-4 overflow-x-hidden">
-			<p className="block text-lg text-gray-700">
-				<span className="text-red-500 font-semibold">*</span>Select the date
-				range to get the summary of the students attendance report
+			<p className="block text-lg text-gray-700 font-semibold">
+				<span className="text-red-500 font-bold">*</span>Select the date range
+				to get the summary of the students attendance report
 			</p>
 			<br />
 			<Row gutter={[16, 16]}>
@@ -188,7 +219,7 @@ const Students = () => {
 						<p className="text-gray-500 mb-2">
 							<span className="text-red-500">* </span>Select the Course
 						</p>
-						<RangePicker />
+						<RangePicker onChange={(e) => handleDateChange(e)} />
 					</Card>
 				</Col>
 				{courses.length > 0 && (
@@ -242,16 +273,23 @@ const Students = () => {
 					</Card>
 				</Col>
 			</Row>
-			<Button type="primary" onClick={fetchStudentData} className="mt-4">
-				Fetch Data
-			</Button>
-			{filteredData.length > 0 && (
-				<Input.Search
-					placeholder="Search by name or register number"
-					onChange={(e) => setSearchText(e.target.value)}
-					className="rounded-3xl text-gray-600"
-				/>
-			)}
+			<Row gutter={[16, 16]}>
+				<Col xs={24} sm={12} md={8}>
+					<button
+						type="button"
+						onClick={fetchStudentData}
+						className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold w-full"
+					>
+						Generate Report
+					</button>
+				</Col>
+			</Row>
+
+			<Input.Search
+				placeholder="Search by name or register number"
+				onChange={(e) => setSearchText(e.target.value)}
+				className="rounded-3xl text-gray-600 mt-4 mb-4"
+			/>
 
 			{loading ? (
 				<Spin tip="Loading..." />
@@ -260,11 +298,8 @@ const Students = () => {
 					<Table
 						dataSource={filteredData}
 						columns={columns}
-						rowClassName={(record, index) =>
-							index % 2 === 0 ? "bg-gray-50" : "bg-white"
-						}
 						pagination={false}
-						className="overflow-auto"
+						className="overflow-auto bg-white"
 					/>
 					<Button type="primary" className="w-32" onClick={exportToCSV}>
 						Export to CSV
