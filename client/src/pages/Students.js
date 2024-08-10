@@ -273,7 +273,7 @@ const Students = () => {
 					</Card>
 				</Col>
 			</Row>
-			<Row gutter={[16, 16]}>
+			<Row gutter={[16, 16]} className="mt-4">
 				<Col xs={24} sm={12} md={8}>
 					<button
 						type="button"
@@ -289,6 +289,7 @@ const Students = () => {
 				placeholder="Search by name or register number"
 				onChange={(e) => setSearchText(e.target.value)}
 				className="rounded-3xl text-gray-600 mt-4 mb-4"
+				size="large"
 			/>
 
 			{loading ? (

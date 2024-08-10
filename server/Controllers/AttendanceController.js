@@ -219,10 +219,8 @@ const studentDashboard = async (req, res) => {
 
 const FinalStudentData = async (req, res) => {
 	const { RegNo, startDate, endDate, coursecode } = req.body;
-	console.log(RegNo, startDate, endDate, coursecode);
 
 	try {
-		// Determine the dynamic report collection based on coursecode
 		const ReportCollection = createReportCollection(coursecode);
 
 		// Fetch the student's report data
@@ -241,39 +239,24 @@ const FinalStudentData = async (req, res) => {
 			},
 			{
 				$match: {
-					"attendance.RegNo": "RegNo",
+					"attendance.RegNo": RegNo,
 				},
 			},
 			{
 				$group: {
-					_id: {
-						RegNo: "$attendance.RegNo",
-						Name: "$attendance.Name",
-					},
+					_id: "$attendance.RegNo",
+					name: { $first: "$attendance.Name" },
 					present: {
 						$sum: {
 							$cond: [
 								{ $in: ["$attendance.status", [1, 2]] },
-								1, // If true, add 1 to present count
-								0, // If false, add 0 to present count
+								1, // If status is 1 or 2, add 1 to present count
+								0, // If not, add 0
 							],
 						},
 					},
 					totalHours: {
-						$sum: 1,
-					},
-				},
-			},
-			{
-				$group: {
-					_id: "$_id.RegNo",
-					name: { $first: "$_id.Name" },
-					data: {
-						$push: {
-							// course: "$_id.course",
-							present: "$present",
-							totalHours: "$totalHours",
-						},
+						$sum: 1, // Total number of records for the given RegNo within the date range
 					},
 				},
 			},
@@ -281,8 +264,9 @@ const FinalStudentData = async (req, res) => {
 				$project: {
 					_id: 0,
 					RegNo: "$_id",
-					name: "$name",
-					data: 1,
+					name: 1,
+					present: 1,
+					totalHours: 1,
 				},
 			},
 		]);
