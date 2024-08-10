@@ -86,11 +86,11 @@ export const AuthForm = ({ setAuth, setUser }) => {
 						<Input.Password />
 					</Form.Item>
 
-					{/* <div className="text-center">
+					<div className="text-center">
 						<a href="/register" className="text-blue-500">
 							Don't have an account? Sign up here!
 						</a>
-					</div> */}
+					</div>
 
 					<Form.Item wrapperCol={{ span: 24 }} className="mt-4">
 						<Button type="primary" htmlType="submit" block>

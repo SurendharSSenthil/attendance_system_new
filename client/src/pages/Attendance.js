@@ -1,5 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { Card, Row, Col, DatePicker, Select, Alert, Statistic } from "antd";
+import {
+	Card,
+	Row,
+	Col,
+	DatePicker,
+	Select,
+	Alert,
+	Statistic,
+	message,
+} from "antd";
 import moment from "moment";
 import AttendanceTable from "../components/AttendanceTable";
 import { url } from "../Backendurl";
@@ -53,8 +62,8 @@ const Attendance = () => {
 	};
 
 	const fetchAttendance = async () => {
-		if (!course || !Class || !yr) {
-			setError("Please select all options before fetching data.");
+		if (!course || !Class || !yr || !currDate || !hr) {
+			message.error("Please select the fields.");
 			return;
 		}
 
@@ -82,10 +91,10 @@ const Attendance = () => {
 				setCount(result.count);
 				setError(null);
 			} else {
-				setError(result.message || "Failed to fetch data.");
+				message.error("Failed to fetch data.");
 			}
 		} catch (err) {
-			setError("An error occurred while fetching attendance data.");
+			message.error("An error occurred while fetching attendance data.");
 			console.error(err);
 		} finally {
 			setLoading(false);
@@ -105,19 +114,26 @@ const Attendance = () => {
 			<Row gutter={[16, 16]}>
 				<Col xs={24} sm={12} md={8}>
 					<Card>
-						<p className="text-gray-500 mb-2">Select the Date</p>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Date
+						</p>
 						<DatePicker
 							onChange={handleDateChange}
-							disabledDate={(current) => current && current > moment()}
-							value={currDate}
+							disabledDate={(current) =>
+								current && current > moment().endOf("day")
+							}
+							// value={currDate}
 							format="YYYY-MM-DD"
 							className="w-full"
-						/>
+							// getPopupContainer={(trigger) => trigger.parentNode}
+						/>{" "}
 					</Card>
 				</Col>
 				<Col xs={24} sm={12} md={8}>
 					<Card>
-						<p className="text-gray-500 mb-2">Select the Hour</p>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Hour
+						</p>
 						<Select
 							onChange={handleHrChange}
 							value={hr}
@@ -132,7 +148,9 @@ const Attendance = () => {
 				{courses.length > 0 && (
 					<Col xs={24} sm={12} md={8}>
 						<Card>
-							<p className="text-gray-500 mb-2">Select the Course</p>
+							<p className="text-gray-500 mb-2">
+								<span className="text-red-500">* </span>Select the Course
+							</p>
 							<Select
 								onChange={handleCourseChange}
 								value={course}
@@ -147,7 +165,9 @@ const Attendance = () => {
 				)}
 				<Col xs={24} sm={12} md={8}>
 					<Card>
-						<p className="text-gray-500 mb-2">Select the Year</p>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Year
+						</p>
 						<Select
 							onChange={(e) => setYr(e)}
 							value={yr}
@@ -161,7 +181,9 @@ const Attendance = () => {
 				</Col>
 				<Col xs={24} sm={12} md={8}>
 					<Card>
-						<p className="text-gray-500 mb-2">Select the Class</p>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Class
+						</p>
 						<Select
 							onChange={(e) => setClass(e)}
 							value={Class}
@@ -173,11 +195,13 @@ const Attendance = () => {
 						/>
 					</Card>
 				</Col>
-				<Col xs={24} sm={12} md={8} className="block">
+			</Row>
+			<Row gutter={[16, 16]}>
+				<Col xs={24} sm={12} md={8} className="md:mt-4">
 					<button
 						type="button"
 						onClick={fetchAttendance}
-						className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50 focus:bg-white focus:text-blue-500 focus:border-blue-500 focus:shadow-md focus:shadow-blue-500/50 outline-none flex flex-row justify-center items-center font-semibold w-full"
+						className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold w-full"
 					>
 						Get Data
 					</button>

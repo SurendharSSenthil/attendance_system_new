@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { DatePicker, Button, Spin, Alert, Table, Input } from "antd";
+import { DatePicker, Button, Spin, Alert, Table, Input, Form } from "antd";
 import moment from "moment";
 import { url } from "../Backendurl";
 import { saveAs } from "file-saver";
@@ -12,7 +12,7 @@ const Students = () => {
 	const [startDate, setStartDate] = useState(moment().startOf("day"));
 	const [endDate, setEndDate] = useState(moment().endOf("day"));
 	const [searchText, setSearchText] = useState("");
-
+	const { RangePicker } = DatePicker;
 	const fetchStudentData = async () => {
 		setLoading(true);
 		try {
@@ -132,11 +132,18 @@ const Students = () => {
 			</p>
 			<br />
 			<div className="mb-4 flex flex-col justify-start md:flex-row md:justify-evenly gap-2 md:gap-4">
-				<DatePicker.RangePicker
-					onChange={handleDateChange}
-					defaultValue={[moment().startOf("day"), moment().endOf("day")]}
-					className="w-full md:w-[400px]"
-				/>
+				<Form.Item
+					label="Select the date range:"
+					name="daterange"
+					rules={[
+						{
+							required: true,
+							message: "Please input the range!",
+						},
+					]}
+				>
+					<RangePicker />
+				</Form.Item>
 				<Button type="primary" onClick={fetchStudentData}>
 					Fetch Data
 				</Button>
