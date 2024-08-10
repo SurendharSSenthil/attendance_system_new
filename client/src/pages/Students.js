@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { DatePicker, Button, Spin, Alert, Table, Input, Form } from "antd";
+import {
+	DatePicker,
+	Button,
+	Spin,
+	Alert,
+	Table,
+	Input,
+	Form,
+	message,
+	Col,
+	Select,
+	Card,
+	Row,
+} from "antd";
 import moment from "moment";
 import { url } from "../Backendurl";
 import { saveAs } from "file-saver";
@@ -12,15 +25,34 @@ const Students = () => {
 	const [startDate, setStartDate] = useState(moment().startOf("day"));
 	const [endDate, setEndDate] = useState(moment().endOf("day"));
 	const [searchText, setSearchText] = useState("");
+	const [yrs, setYrs] = useState([]);
+	const [Classes, setClasses] = useState([]);
+	const [courses, setCourses] = useState([]);
+	const [yr, setYr] = useState();
+	const [Class, setClass] = useState("");
+	const [course, setCourse] = useState("");
 	const { RangePicker } = DatePicker;
 	const fetchStudentData = async () => {
+		if (!course || !yr || !Class || !startDate || !endDate) {
+			message.error("Please input all the fields!");
+			return;
+		}
 		setLoading(true);
 		try {
-			const response = await fetch(
-				`${url}/attendance/student-dashboard?startDate=${startDate.format(
-					"YYYY-MM-DD"
-				)}&endDate=${endDate.format("YYYY-MM-DD")}`
-			);
+			const response = await fetch(`${url}/attendance/student-dashboard`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: JSON.stringify({
+					startDate: startDate.format("YYYY-MM-DD"),
+					endDate: endDate.format("YYYY-MM-DD"),
+					coursecode: course,
+					yr,
+					Class,
+				}),
+			});
 			if (!response.ok) {
 				throw new Error("Failed to fetch student data");
 			}
@@ -37,9 +69,28 @@ const Students = () => {
 		}
 	};
 
+	const fetchCourses = async () => {
+		setLoading(true);
+		try {
+			const coursesResponse = await fetch(`${url}/students/faculty-data`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+			});
+			const coursesData = await coursesResponse.json();
+			setCourses(Array.isArray(coursesData.course) ? coursesData.course : []);
+			setYrs(Array.isArray(coursesData.yr) ? coursesData.yr : []);
+			setClasses(Array.isArray(coursesData.dept) ? coursesData.dept : []);
+		} catch (err) {
+			message.error("Failed to fetch courses. Please try again.");
+			console.error(err);
+		} finally {
+			setLoading(false);
+		}
+	};
 	useEffect(() => {
-		fetchStudentData();
-	}, [startDate, endDate]);
+		fetchCourses();
+	}, []);
 
 	useEffect(() => {
 		document.title = "ATTENDANCE SYSTEM | STATISTICS";
@@ -131,32 +182,79 @@ const Students = () => {
 				range to get the summary of the students attendance report
 			</p>
 			<br />
-			<div className="mb-4 flex flex-col justify-start md:flex-row md:justify-evenly gap-2 md:gap-4">
-				<Form.Item
-					label="Select the date range:"
-					name="daterange"
-					rules={[
-						{
-							required: true,
-							message: "Please input the range!",
-						},
-					]}
-				>
-					<RangePicker />
-				</Form.Item>
-				<Button type="primary" onClick={fetchStudentData}>
-					Fetch Data
-				</Button>
+			<Row gutter={[16, 16]}>
+				<Col xs={24} sm={12} md={8}>
+					<Card>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Course
+						</p>
+						<RangePicker />
+					</Card>
+				</Col>
+				{courses.length > 0 && (
+					<Col xs={24} sm={12} md={8}>
+						<Card>
+							<p className="text-gray-500 mb-2">
+								<span className="text-red-500">* </span>Select the Course
+							</p>
+							<Select
+								onChange={(e) => setCourse(e)}
+								value={course}
+								options={courses.map((course) => ({
+									label: course.coursename,
+									value: course.coursecode,
+								}))}
+								className="w-full"
+							/>
+						</Card>
+					</Col>
+				)}
+				<Col xs={24} sm={12} md={8}>
+					<Card>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Year
+						</p>
+						<Select
+							onChange={(e) => setYr(e)}
+							value={yr}
+							options={yrs.map((year) => ({
+								label: year,
+								value: year,
+							}))}
+							className="w-full"
+						/>
+					</Card>
+				</Col>
+				<Col xs={24} sm={12} md={8}>
+					<Card>
+						<p className="text-gray-500 mb-2">
+							<span className="text-red-500">* </span>Select the Class
+						</p>
+						<Select
+							onChange={(e) => setClass(e)}
+							value={Class}
+							options={Classes.map((c) => ({
+								label: c,
+								value: c,
+							}))}
+							className="w-full"
+						/>
+					</Card>
+				</Col>
+			</Row>
+			<Button type="primary" onClick={fetchStudentData} className="mt-4">
+				Fetch Data
+			</Button>
+			{filteredData.length > 0 && (
 				<Input.Search
 					placeholder="Search by name or register number"
 					onChange={(e) => setSearchText(e.target.value)}
 					className="rounded-3xl text-gray-600"
 				/>
-			</div>
+			)}
+
 			{loading ? (
 				<Spin tip="Loading..." />
-			) : error ? (
-				<Alert message={error} type="error" />
 			) : filteredData.length > 0 ? (
 				<div className="flex flex-col gap-4">
 					<Table

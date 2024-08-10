@@ -131,6 +131,7 @@ const fetchData = async (req, res) => {
 const studentDashboard = async (req, res) => {
 	try {
 		const { startDate, endDate, coursecode } = req.body;
+		console.log("@studentDashboard", startDate, endDate, coursecode);
 
 		if (!coursecode) {
 			return res.status(400).json({ error: "Course code is required" });
