@@ -238,7 +238,7 @@ const Attendance = () => {
 							/>
 						</Card>
 					</Col>
-					<Col xs={24} sm={12} md={12} lg={12}>
+					<Col xs={24} sm={12} md={12} lg={12} className="mt-4 md:mt-0">
 						<Card bordered={false}>
 							<Statistic
 								title="Number of Absentees"
