@@ -66,7 +66,9 @@ const Attendance = () => {
 			message.error("Please select the fields.");
 			return;
 		}
-
+		setData([]);
+		setCount(0);
+		setAbsent(0);
 		setLoading(true);
 		try {
 			const response = await fetch(`${url}/attendance/get-attendance`, {
@@ -91,7 +93,7 @@ const Attendance = () => {
 				setCount(result.count);
 				setError(null);
 			} else {
-				message.error("Failed to fetch data.");
+				message.error(`${result.message}`);
 			}
 		} catch (err) {
 			message.error("An error occurred while fetching attendance data.");
@@ -155,7 +157,7 @@ const Attendance = () => {
 								onChange={handleCourseChange}
 								value={course}
 								options={courses.map((course) => ({
-									label: course.coursename,
+									label: `${course.coursename} - ${course.coursecode}`,
 									value: course.coursecode,
 								}))}
 								className="w-full"

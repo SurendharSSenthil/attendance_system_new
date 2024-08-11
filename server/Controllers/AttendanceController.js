@@ -1,5 +1,6 @@
 const createReportCollection = require("../Models/reportModel");
 const createStudentCollection = require("../Models/studentModel");
+const classmodel = require("../Models/courseModel");
 
 const updateAttendance = async (req, res) => {
 	const { coursecode, coursename, facname, date, hr, attendance } = req.body;
@@ -66,6 +67,12 @@ const fetchData = async (req, res) => {
 	const { id } = req.user;
 	console.log(hr, yr, Class);
 	try {
+		const data = await classmodel.find({ coursecode, dept: yr, class: Class });
+		if (data.length <= 0) {
+			return res
+				.status(404)
+				.json({ message: "No students found! Please check the input fields" });
+		}
 		// Fetch students data from the dynamically created collection
 		const StudentCollection = createStudentCollection(coursecode);
 		const students = await StudentCollection.find().sort({ RegNo: 1 });
@@ -117,6 +124,7 @@ const fetchData = async (req, res) => {
 		});
 
 		console.log("@fetchData", attendanceData);
+		console.log("data", data);
 		res.status(200).json({
 			reports: attendanceData,
 			count: students_count,
