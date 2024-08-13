@@ -20,7 +20,7 @@ const Attendance = () => {
 	const [courses, setCourses] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(null);
-	const [hr, setHr] = useState(1);
+	const [hr, setHr] = useState();
 	const [course, setCourse] = useState("");
 	const [yr, setYr] = useState("");
 	const [Class, setClass] = useState("");
@@ -173,7 +173,7 @@ const Attendance = () => {
 						<Select
 							onChange={(e) => setYr(e)}
 							value={yr}
-							options={yrs.map((year) => ({
+							options={[...new Set(yrs)].map((year) => ({
 								label: year,
 								value: year,
 							}))}
@@ -189,7 +189,7 @@ const Attendance = () => {
 						<Select
 							onChange={(e) => setClass(e)}
 							value={Class}
-							options={Classes.map((c) => ({
+							options={[...new Set(Classes)].map((c) => ({
 								label: c,
 								value: c,
 							}))}
