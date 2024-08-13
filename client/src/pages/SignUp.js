@@ -52,7 +52,7 @@ const Auth = ({ setAuth, setUser }) => {
 		document.title = "ATTENDANCE SYSTEM | REGISTER";
 	});
 	return (
-		<div className="flex justify-center items-center min-h-screen p-4">
+		<div className="flex justify-center items-center min-h-screen p-4 overflow-x-hidden">
 			<Card className="shadow-lg" style={{ width: "100%", maxWidth: "400px" }}>
 				<h2
 					className="text-center font-bold text-lg text-brown-900 pb-4"

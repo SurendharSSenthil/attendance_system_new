@@ -232,7 +232,7 @@ const Students = () => {
 								onChange={(e) => setCourse(e)}
 								value={course}
 								options={courses.map((course) => ({
-									label: course.coursename,
+									label: `${course.coursename} - ${course.coursecode}`,
 									value: course.coursecode,
 								}))}
 								className="w-full"
@@ -248,7 +248,7 @@ const Students = () => {
 						<Select
 							onChange={(e) => setYr(e)}
 							value={yr}
-							options={yrs.map((year) => ({
+							options={[...new Set(yrs)].map((year) => ({
 								label: year,
 								value: year,
 							}))}
@@ -256,6 +256,7 @@ const Students = () => {
 						/>
 					</Card>
 				</Col>
+
 				<Col xs={24} sm={12} md={8}>
 					<Card>
 						<p className="text-gray-500 mb-2">
@@ -264,7 +265,7 @@ const Students = () => {
 						<Select
 							onChange={(e) => setClass(e)}
 							value={Class}
-							options={Classes.map((c) => ({
+							options={[...new Set(Classes)].map((c) => ({
 								label: c,
 								value: c,
 							}))}
