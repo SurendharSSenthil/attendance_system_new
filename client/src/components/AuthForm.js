@@ -40,6 +40,10 @@ export const AuthForm = ({ setAuth, setUser }) => {
 				// Authentication failed
 				message.error(data.message || "Authentication failed");
 				setAuth(false);
+				values.username = "";
+				values.password = "";
+				// console.log(values.username);
+				// console.log(values.password);
 			}
 		} catch (err) {
 			message.error("An error occurred. Please try again.");

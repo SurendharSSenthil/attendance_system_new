@@ -6,6 +6,10 @@ const register = async (req, res) => {
 	const data = req.body;
 	const username = data.username;
 	try {
+		const User = await admin.find(data);
+		if (User) {
+			return res.status(400).send({ message: "Username already exists!" });
+		}
 		// Create a new user
 		const user = new admin(data);
 		await user.save();

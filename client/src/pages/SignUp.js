@@ -40,6 +40,8 @@ const Auth = ({ setAuth, setUser }) => {
 				} else {
 					// If authentication fails, display an error message
 					message.error(data.message || "Authentication failed");
+					values.username = "";
+					values.password = "";
 					// Update the state to indicate that the user is not authenticated
 					setAuth(false);
 				}

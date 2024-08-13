@@ -24,7 +24,7 @@ const AppHeader = ({ setAuth, user }) => {
 
 	return (
 		<Header className="bg-white flex justify-between items-center h-[60px] p-4 shadow-md z-50">
-			<Text className="text-lg font-semibold">Attendance Manager</Text>
+			<Text className="text-lg font-bold">Attendance Manager</Text>
 			<div className="flex flex-row justify-between items-center gap-8">
 				<button
 					type="button"

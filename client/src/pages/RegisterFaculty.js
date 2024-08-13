@@ -75,8 +75,8 @@ const RegisterFaculty = () => {
 	const handleFileChange = ({ fileList }) => setFileList(fileList);
 
 	return (
-		<div className="bg-gray-100 flex flex-col justify-center items-center min-h-screen">
-			<h2 className="text-slate-500 text-xl font-semibold">
+		<div className="bg-gray-100 flex flex-col justify-center items-center min-h-screen overflow-x-hidden">
+			<h2 className="text-slate-700 text-xl font-semibold">
 				Faculty Course Registration
 			</h2>
 			<div style={{ padding: "20px" }}>
