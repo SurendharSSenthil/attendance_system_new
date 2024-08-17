@@ -24,6 +24,8 @@ const updateAttendance = async (req, res) => {
 				coursecode,
 				date,
 				hr,
+				freeze: true,
+				isExpired: false,
 				attendance,
 			});
 
@@ -33,19 +35,19 @@ const updateAttendance = async (req, res) => {
 				report: newReport,
 			});
 		}
-
+		report.freeze = true;
 		// Update attendance records
 		for (const entry of attendance) {
-			const { RegNo, status, freeze } = entry;
+			const { RegNo, status } = entry;
 			const existingEntry = report.attendance.find(
 				(a) => a.RegNo.toString() === RegNo
 			);
 
 			if (existingEntry) {
 				existingEntry.status = status;
-				existingEntry.freeze = freeze;
+				// existingEntry.freeze = freeze;
 			} else {
-				report.attendance.push({ RegNo, status, freeze });
+				report.attendance.push({ RegNo, status });
 			}
 		}
 
@@ -88,7 +90,7 @@ const fetchData = async (req, res) => {
 				RegNo: student.RegNo,
 				Name: student.StdName,
 				status: 1, // Assuming 1 means present
-				freeze: false,
+				// freeze: false,
 			}));
 
 			reports = new ReportCollection({
@@ -97,6 +99,8 @@ const fetchData = async (req, res) => {
 				coursecode,
 				date,
 				hr,
+				freeze: false,
+				isExpired: false,
 				attendance,
 			});
 
@@ -105,6 +109,9 @@ const fetchData = async (req, res) => {
 
 		// Prepare the attendance data and count absentees
 		let absenteeCount = 0;
+		let isExpired = reports.isExpired;
+		let freeze = reports.freeze;
+
 		const attendanceData = students.map((student) => {
 			const attendance = reports.attendance.find(
 				(a) => a.RegNo === student.RegNo
@@ -119,7 +126,7 @@ const fetchData = async (req, res) => {
 				RegNo: student.RegNo,
 				Name: student.StdName,
 				status: attendance ? attendance.status : 1,
-				freeze: attendance ? attendance.freeze : false,
+				// freeze: attendance ? attendance.freeze : false,
 			};
 		});
 
@@ -128,7 +135,9 @@ const fetchData = async (req, res) => {
 		res.status(200).json({
 			reports: attendanceData,
 			count: students_count,
-			absentees: absenteeCount, // Include the number of absentees in the response
+			absentees: absenteeCount,
+			isExpired,
+			freeze,
 		});
 	} catch (error) {
 		console.error("Error fetching attendance data:", error);
@@ -170,7 +179,7 @@ const studentDashboard = async (req, res) => {
 			},
 			{
 				$match: {
-					"attendance.freeze": { $eq: true },
+					$freeze: { $eq: true },
 				},
 			},
 			{
@@ -253,6 +262,7 @@ const FinalStudentData = async (req, res) => {
 						$lte: new Date(endDate),
 					},
 					"attendance.RegNo": RegNo,
+					freeze: true,
 				},
 			},
 			{

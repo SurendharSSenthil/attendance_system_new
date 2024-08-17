@@ -15,6 +15,9 @@ const AttendanceTable = ({
 	yr,
 	Class,
 	fetchAttendance,
+	exp,
+	freeze,
+	setFreeze,
 }) => {
 	const [localData, setLocalData] = useState(data);
 	const [error, setError] = useState(null);
@@ -29,7 +32,7 @@ const AttendanceTable = ({
 		try {
 			const updatedData = localData.map((record) => ({
 				...record,
-				freeze: true,
+				// freeze: true,
 			}));
 
 			const response = await fetch(`${url}/attendance/update`, {
@@ -43,6 +46,7 @@ const AttendanceTable = ({
 					coursecode: course,
 					coursename: course,
 					hr,
+					freeze: true,
 					attendance: updatedData,
 				}),
 			});
@@ -88,7 +92,7 @@ const AttendanceTable = ({
 			dataIndex: "status",
 			key: "status",
 			render: (text, record) => {
-				if (record.freeze) {
+				if (freeze) {
 					return (
 						<span
 							className={
@@ -143,15 +147,25 @@ const AttendanceTable = ({
 						pagination={false}
 						className="overflow-x-scroll"
 					/>
-					{localData.length > 0 && localData[0].freeze === false && (
+					{localData.length > 0 && !exp && !freeze && (
 						<Button
-							type="primary"
+							type="button"
 							onClick={handleSave}
-							className="mt-4"
+							className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all  w-[200px] duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold"
 							disabled={loading}
 						>
 							Save Attendance
 						</Button>
+					)}
+					{localData.length > 0 && !exp && freeze && (
+						<button
+							type="button"
+							onClick={() => setFreeze(false)}
+							className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all  w-[200px] duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold"
+							disabled={loading}
+						>
+							UnFreeze
+						</button>
 					)}
 				</>
 			)}

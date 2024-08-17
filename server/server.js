@@ -4,6 +4,10 @@ const connectDB = require("./Config/db");
 const facultyRoutes = require("./Routes/facultyRoutes");
 const attendanceRoutes = require("./Routes/attendanceRoutes");
 const adminRoutes = require("./Routes/adminRoutes");
+const cron = require("node-cron");
+const createReportCollection = require("./Models/reportModel");
+const mongoose = require("mongoose");
+
 require("dotenv").config();
 
 const port = process.env.PORT || 5000;
@@ -14,6 +18,44 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+cron.schedule("0 0 * * *", async () => {
+	try {
+		const now = new Date();
+
+		// Get all collections
+		const collections = await mongoose.connection.db
+			.listCollections()
+			.toArray();
+		const reportCollections = collections
+			.map((collection) => collection.name)
+			.filter((name) => name.startsWith("reports_"));
+
+		// Update reports in each report collection
+		for (const collectionName of reportCollections) {
+			const ReportCollection = createReportCollection(
+				collectionName.replace("reports_", "")
+			);
+
+			// Update reports where the creation date is more than 7 days ago
+			await ReportCollection.updateMany(
+				{
+					created_at: { $lte: new Date(now - 7 * 24 * 60 * 60 * 1000) },
+					isExpired: false,
+				},
+				{
+					$set: { freeze: true, isExpired: true },
+				}
+			);
+			console.log(new Date(now - 7 * 24 * 60 * 60 * 1000));
+			console.log(ReportCollection);
+		}
+
+		console.log("Reports updated successfully");
+	} catch (err) {
+		console.error("Error updating reports:", err);
+	}
+});
 
 app.use("/api/students", facultyRoutes);
 app.use("/api/attendance", attendanceRoutes);

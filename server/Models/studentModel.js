@@ -7,10 +7,15 @@ const createStudentCollection = (courseCode) => {
 		return mongoose.models[modelName];
 	}
 
-	const studentSchema = new mongoose.Schema({
-		RegNo: { type: String, required: true },
-		StdName: { type: String, required: true },
-	});
+	const studentSchema = new mongoose.Schema(
+		{
+			RegNo: { type: String, required: true },
+			StdName: { type: String, required: true },
+		},
+		{
+			timestamps: true,
+		}
+	);
 
 	// Create and return the model
 	return mongoose.model(modelName, studentSchema);

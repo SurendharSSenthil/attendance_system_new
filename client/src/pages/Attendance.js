@@ -28,6 +28,8 @@ const Attendance = () => {
 	const [Classes, setClasses] = useState([]);
 	const [absent, setAbsent] = useState(0);
 	const [count, setCount] = useState(0);
+	const [freeze, setFreeze] = useState(false);
+	const [exp, setExp] = useState(false);
 
 	const handleDateChange = (date, dateString) => {
 		setCurrDate(moment(dateString, "YYYY-MM-DD"));
@@ -91,6 +93,8 @@ const Attendance = () => {
 				setData(result.reports);
 				setAbsent(result.absentees);
 				setCount(result.count);
+				setExp(result.isExpired);
+				setFreeze(result.freeze);
 				setError(null);
 			} else {
 				message.error(`${result.message}`);
@@ -224,6 +228,9 @@ const Attendance = () => {
 						yr={yr}
 						Class={Class}
 						fetchAttendance={fetchAttendance}
+						exp={exp}
+						freeze={freeze}
+						setFreeze={setFreeze}
 					/>
 				)}
 			</Card>
