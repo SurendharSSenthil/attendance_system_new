@@ -179,7 +179,7 @@ const studentDashboard = async (req, res) => {
 			},
 			{
 				$match: {
-					$freeze: { $eq: true },
+					freeze: { $eq: true },
 				},
 			},
 			{

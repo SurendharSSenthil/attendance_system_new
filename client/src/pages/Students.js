@@ -35,9 +35,11 @@ const Students = () => {
 	const fetchStudentData = async () => {
 		if (!course || !yr || !Class || !startDate || !endDate) {
 			message.error("Please input all the fields!");
+			setData([]);
 			return;
 		}
 		setLoading(true);
+		setData([]);
 		try {
 			const response = await fetch(`${url}/attendance/student-dashboard`, {
 				method: "POST",

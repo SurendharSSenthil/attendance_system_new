@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, Button, Spin, Select } from "antd";
+import { Table, Button, Spin, Select, Alert } from "antd";
 import { url } from "../Backendurl";
 
 const { Option } = Select;
@@ -151,7 +151,7 @@ const AttendanceTable = ({
 						<Button
 							type="button"
 							onClick={handleSave}
-							className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all  w-[200px] duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold"
+							className="relative py-0 px-4 h-10 mt-4  rounded-lg transition-all  w-[200px] duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold"
 							disabled={loading}
 						>
 							Save Attendance
@@ -161,11 +161,31 @@ const AttendanceTable = ({
 						<button
 							type="button"
 							onClick={() => setFreeze(false)}
-							className="relative py-0 px-4 h-10 mt-4 lg:mt-0 rounded-lg transition-all  w-[200px] duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold"
+							className="relative py-0 px-4 h-10 mt-4 rounded-lg transition-all  w-[200px] duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50  outline-none flex flex-row justify-center items-center font-semibold"
 							disabled={loading}
 						>
 							UnFreeze
 						</button>
+					)}
+					{localData.length > 0 && exp && freeze && (
+						<Alert
+							// message="warning"
+							description="The attendance record has been frozen."
+							type="warning"
+							// showIcon
+							closable
+							className="mt-4"
+						/>
+					)}
+					{localData.length > 0 && !exp && (
+						<Alert
+							// message="warning"
+							description="The attendance record will be frozen after 7 days."
+							type="warning"
+							// showIcon
+							closable
+							className="mt-4"
+						/>
 					)}
 				</>
 			)}
