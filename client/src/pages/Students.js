@@ -54,7 +54,10 @@ const Students = () => {
 				}),
 			});
 			if (!response.ok) {
-				throw new Error("Failed to fetch student data");
+				throw new Error(
+					response.message ||
+						"No Students Found! Check for the correctness of the input fields!"
+				);
 			}
 			const studentData = await response.json();
 			setData(studentData);
@@ -62,7 +65,7 @@ const Students = () => {
 			setFilteredData(studentData);
 			setError(null);
 		} catch (err) {
-			setError("Failed to fetch student data. Please try again.");
+			message.error(err.message);
 			console.error(err);
 		} finally {
 			setLoading(false);
@@ -120,19 +123,37 @@ const Students = () => {
 		const header = [
 			"Registration Number",
 			"Student Name",
-			"Total hours",
-			"Present",
-			...data[0].courses.map((course) => course.course),
+			...data[0].courses[0].statuses.map((status, index) => {
+				const dayOfWeek = moment(status.date).format("dddd");
+				return `${dayOfWeek} ${moment(status.date).format("YYYY-MM-DD")} Hour ${
+					status.hour
+				}`;
+			}),
+			"Total Hours",
+			"Present Hours",
+			"Percentage",
 		];
+
 		const rows = data.map((student) => [
 			student.RegNo,
 			student.name,
+			...student.courses[0].statuses.map((status, index) => {
+				const statusValue = student.courses[0].statuses[index].status;
+				if (statusValue === 1) {
+					return "P";
+				} else if (statusValue === 2) {
+					return "OD";
+				} else {
+					return "AB";
+				}
+			}),
 			...student.courses.map((course) => course.totalHours),
 			...student.courses.map((course) => course.present),
 			...student.courses.map((course) =>
 				Math.round((course.present * 100) / course.totalHours)
 			),
 		]);
+
 		const csvContent = [header, ...rows].map((e) => e.join(",")).join("\n");
 
 		const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -151,60 +172,90 @@ const Students = () => {
 			dataIndex: "name",
 			key: "name",
 		},
-		...(data.length > 0 && data[0].courses
-			? data[0].courses.map((course) => ({
-					title: "Total Hours",
-					dataIndex: course.totalHours,
-					key: course.totalHours,
-					render: (_, record) => {
-						const courseData = record.courses.find(
-							(c) => c.course === course.course
-						);
-						return <span>{courseData ? courseData.totalHours : 0}</span>;
-					},
-			  }))
-			: []),
-		...(data.length > 0 && data[0].courses
-			? data[0].courses.map((course) => ({
-					title: "Present Hours",
-					dataIndex: course.present,
-					key: course.present,
-					render: (_, record) => {
-						const courseData = record.courses.find(
-							(c) => c.course === course.course
-						);
-						return <span>{courseData ? courseData.present : 0}</span>;
-					},
-			  }))
-			: []),
-		...(data.length > 0 && data[0].courses
-			? data[0].courses.map((course) => ({
-					title: "Percentage",
-					dataIndex: course.course,
-					key: course.course,
-					render: (_, record) => {
-						const courseData = record.courses.find(
-							(c) => c.course === course.course
-						);
-						return (
-							<span
-								className={
-									(courseData.present * 100) / courseData.totalHours < 75
-										? "text-red-400"
-										: ""
-								}
-							>
-								{courseData
-									? Math.round(
-											(courseData.present * 100) / courseData.totalHours
-									  )
-									: 0}
-							</span>
-						);
-					},
-			  }))
-			: []),
 	];
+
+	if (data.length > 0 && data[0]?.courses[0]?.statuses?.length > 0) {
+		data[0].courses[0].statuses.forEach((status, index) => {
+			const dayOfWeek = moment(status.date).format("dddd");
+			columns.push({
+				title: `${dayOfWeek} ${moment(status.date).format("YYYY-MM-DD")} Hour ${
+					status.hour
+				}`,
+				key: `hour_${index + 1}`,
+				render: (_, record) => {
+					const courseData = record.courses[0];
+					if (courseData) {
+						const statusValue = courseData.statuses[index].status;
+						if (statusValue === 1) {
+							return "P";
+						} else if (statusValue === 2) {
+							return <span className="text-yellow-500 font-semibold">OD</span>;
+						} else {
+							return <span className="text-red-500 font-semibold">AB</span>;
+						}
+					} else {
+						return "-";
+					}
+				},
+			});
+		});
+	}
+
+	if (data.length > 0 && data[0].courses) {
+		data[0].courses.forEach((course) => {
+			columns.push({
+				title: "Total Hours",
+				dataIndex: course.totalHours,
+				key: `total_${course.course}`,
+				render: (_, record) => {
+					const courseData = record.courses.find(
+						(c) => c.course === course.course
+					);
+					return <span>{courseData ? courseData.totalHours : 0}</span>;
+				},
+			});
+		});
+
+		data[0].courses.forEach((course) => {
+			columns.push({
+				title: "Present Hours",
+				dataIndex: course.present,
+				key: `present_${course.course}`,
+				render: (_, record) => {
+					const courseData = record.courses.find(
+						(c) => c.course === course.course
+					);
+					return <span>{courseData ? courseData.present : 0}</span>;
+				},
+			});
+		});
+
+		data[0].courses.forEach((course) => {
+			columns.push({
+				title: "Percentage",
+				dataIndex: course.course,
+				key: `percentage_${course.course}`,
+				render: (_, record) => {
+					const courseData = record.courses.find(
+						(c) => c.course === course.course
+					);
+					return (
+						<span
+							className={
+								(courseData.present * 100) / courseData.totalHours < 75
+									? "text-red-700"
+									: ""
+							}
+						>
+							{courseData
+								? Math.round((courseData.present * 100) / courseData.totalHours)
+								: 0}
+						</span>
+					);
+				},
+			});
+		});
+	}
 
 	return (
 		<div className="p-4 overflow-x-hidden">

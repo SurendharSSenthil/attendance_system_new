@@ -138,17 +138,22 @@ const fetchData = async (req, res) => {
 
 const studentDashboard = async (req, res) => {
 	try {
-		const { startDate, endDate, coursecode } = req.body;
+		const { startDate, endDate, coursecode, yr, Class } = req.body;
 		console.log("@studentDashboard", startDate, endDate, coursecode);
 
 		if (!coursecode) {
 			return res.status(400).json({ error: "Course code is required" });
 		}
 
+		const data = await classmodel.find({ coursecode, dept: yr, class: Class });
+		if (data.length <= 0) {
+			return res
+				.status(404)
+				.json({ message: "No students found! Please check the input fields" });
+		}
+
 		// Dynamically get the Report collection for the given coursecode
 		const ReportCollection = createReportCollection(coursecode);
-		console.log(coursecode);
-		console.log(ReportCollection);
 
 		// Perform aggregation to fetch and calculate attendance data
 		const result = await ReportCollection.aggregate([
@@ -187,6 +192,13 @@ const studentDashboard = async (req, res) => {
 					totalHours: {
 						$sum: 1,
 					},
+					statuses: {
+						$push: {
+							date: "$date",
+							hour: "$hr",
+							status: "$attendance.status",
+						},
+					},
 				},
 			},
 			{
@@ -198,6 +210,7 @@ const studentDashboard = async (req, res) => {
 							course: "$_id.course",
 							present: "$present",
 							totalHours: "$totalHours",
+							statuses: "$statuses",
 						},
 					},
 				},
