@@ -3,7 +3,8 @@ const jwt = require("jsonwebtoken");
 require("dotenv").config();
 
 const register = async (req, res) => {
-	const data = req.body;
+	let data = req.body;
+	data["role"] = "A";
 	const username = data.username;
 	try {
 		const User = await admin.find(data);
@@ -55,7 +56,29 @@ const auth = async (req, res) => {
 	}
 };
 
+const addRep = async (req, res) => {
+	let data = req.body;
+	data["role"] = "U";
+	console.log(data);
+	try {
+		const user = await admin.find({ username: data.username });
+		console.log(user);
+		if (user.length > 0) {
+			return res.status(400).json({ message: "Username already exists!" });
+		}
+		const rep = new admin(data);
+		await rep.save();
+
+		console.log("New Representative Added", rep);
+		return res.status(201).json({ message: "New representative added" });
+	} catch (err) {
+		console.log("Error at creating representative!", err);
+		return res.status(500).send("Internal Server Error");
+	}
+};
+
 module.exports = {
 	auth,
 	register,
+	addRep,
 };

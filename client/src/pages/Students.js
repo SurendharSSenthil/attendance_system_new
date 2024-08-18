@@ -177,7 +177,7 @@ const Students = () => {
 	];
 
 	if (data.length > 0 && data[0]?.courses[0]?.statuses?.length > 0) {
-		data[0].courses[0].statuses.forEach((status, index) => {
+		data[1].courses[0].statuses.forEach((status, index) => {
 			const dayOfWeek = moment(status.date).format("dddd");
 			columns.push({
 				title: `${dayOfWeek} ${moment(status.date).format("YYYY-MM-DD")} Hour ${
@@ -187,7 +187,7 @@ const Students = () => {
 				render: (_, record) => {
 					const courseData = record.courses[0];
 					if (courseData) {
-						const statusValue = courseData.statuses[index].status;
+						const statusValue = courseData?.statuses[index]?.status;
 						if (statusValue === 1) {
 							return "P";
 						} else if (statusValue === 2) {

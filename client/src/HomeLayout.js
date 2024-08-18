@@ -9,7 +9,7 @@ const { Content, Footer } = Layout;
 const HomeLayout = ({ setAuth, user }) => {
 	return (
 		<Layout style={{ minHeight: "100vh" }}>
-			<Sidebar style={{ position: "fixed" }} />
+			<Sidebar user={user} style={{ position: "fixed" }} />
 			<Layout>
 				<AppHeader setAuth={setAuth} user={user} />
 				<Content style={{ padding: "16px", marginTop: "20px" }}>

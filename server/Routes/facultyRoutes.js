@@ -41,11 +41,61 @@ router.get("/:coursecode", authenticateToken, async (req, res) => {
 
 		const students = await StudentCollection.find().sort({ RegNo: 1 });
 
-		console.log(students);
+		console.log("@students list", students);
 		res.json(students);
 	} catch (error) {
 		console.error("Error fetching students:", error);
 		res.status(500).send("Server Error");
+	}
+});
+
+router.post("/add-student", authenticateToken, async (req, res) => {
+	const { StdName, RegNo, coursecode } = req.body;
+
+	if (!StdName || !RegNo || !coursecode) {
+		return res.status(404).json({ message: "Enter all fields" });
+	}
+
+	try {
+		const StudentModel = createStudentCollection(coursecode);
+		const user = await StudentModel.findOne({ RegNo, StdName });
+
+		if (user) {
+			return res.status(400).json({ message: "User already exists!" });
+		}
+
+		const newStudent = new StudentModel({ RegNo, StdName });
+
+		const savedStudent = await newStudent.save();
+
+		console.log("Added Student:", savedStudent);
+		return res
+			.status(200)
+			.json({ message: "Student added successfully", student: savedStudent });
+	} catch (err) {
+		console.error("Error adding student:", err);
+		return res.status(500).send("Internal Server Error");
+	}
+});
+
+router.delete("/delete-student", authenticateToken, async (req, res) => {
+	const { coursecode, RegNo } = req.body;
+
+	try {
+		const StudentCollection = createStudentCollection(coursecode);
+		const student = await StudentCollection.findOneAndDelete({ RegNo });
+
+		if (!student) {
+			return res.status(404).json({ message: "Student not found" });
+		}
+
+		console.log("Deleted Student:", student);
+		return res
+			.status(200)
+			.json({ message: "Student deleted successfully", student });
+	} catch (err) {
+		console.error("Error deleting student:", err);
+		return res.status(500).send("Internal Server Error");
 	}
 });
 

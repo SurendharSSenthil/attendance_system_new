@@ -7,11 +7,13 @@ import {
 	DashboardOutlined,
 	MenuFoldOutlined,
 	MenuUnfoldOutlined,
+	EditOutlined,
+	UnlockOutlined,
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
 
-const Sidebar = () => {
+const Sidebar = ({ user }) => {
 	const [collapsed, setCollapsed] = useState(false);
 	const [selectedKey, setSelectedKey] = useState("1");
 
@@ -30,19 +32,34 @@ const Sidebar = () => {
 			label: "Attendance",
 			path: "/attendance",
 		},
-		{
+	];
+
+	if (user?.role === "A") {
+		items.push({
 			key: "2",
 			icon: <DashboardOutlined />,
 			label: "Dashboard",
 			path: "/Dashboard",
-		},
-		{
+		});
+		items.push({
 			key: "3",
 			icon: <PieChartOutlined />,
 			label: "Summary",
 			path: "/students",
-		},
-	];
+		});
+		items.push({
+			key: "4",
+			icon: <EditOutlined />,
+			label: "Edit-Data",
+			path: "/edit",
+		});
+		items.push({
+			key: "5",
+			icon: <UnlockOutlined />,
+			label: "unlock-attendance",
+			path: "/unlock-attendance",
+		});
+	}
 
 	return (
 		<Sider

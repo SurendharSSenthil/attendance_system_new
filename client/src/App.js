@@ -12,6 +12,7 @@ import Students from "./pages/Students";
 import HomeLayout from "./HomeLayout";
 import RegisterFaculty from "./pages/RegisterFaculty";
 import SignUp from "./pages/SignUp";
+import EditData from "./pages/EditData";
 
 const App = () => {
 	const [auth, setAuth] = useState(false);
@@ -87,6 +88,10 @@ const App = () => {
 					<Route
 						path="students"
 						element={<Students setAuth={setAuth} user={user} />}
+					/>
+					<Route
+						path="edit"
+						element={<EditData setAuth={setAuth} user={user} />}
 					/>
 				</Route>
 
