@@ -13,6 +13,7 @@ import HomeLayout from "./HomeLayout";
 import RegisterFaculty from "./pages/RegisterFaculty";
 import SignUp from "./pages/SignUp";
 import EditData from "./pages/EditData";
+import UnlockAttendance from "./pages/UnlockAttendance";
 
 const App = () => {
 	const [auth, setAuth] = useState(false);
@@ -92,6 +93,10 @@ const App = () => {
 					<Route
 						path="edit"
 						element={<EditData setAuth={setAuth} user={user} />}
+					/>
+					<Route
+						path="unlock-attendance"
+						element={<UnlockAttendance setAuth={setAuth} user={user} />}
 					/>
 				</Route>
 

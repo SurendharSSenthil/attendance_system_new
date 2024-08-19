@@ -11,7 +11,7 @@ import {
 	Form,
 	Input,
 } from "antd";
-import { DeleteTwoTone } from "@ant-design/icons";
+import { DeleteTwoTone, EditOutlined } from "@ant-design/icons";
 import { url } from "../Backendurl";
 
 const EditData = ({ setAuth, user }) => {
@@ -187,6 +187,7 @@ const EditData = ({ setAuth, user }) => {
 	return (
 		<div className="md:m-2 flex flex-col gap-2 md:block">
 			<h2 className="block text-lg text-gray-700 font-semibold mb-4">
+				<EditOutlined />
 				Edit Students Details
 			</h2>
 			<Row gutter={[16, 16]}>

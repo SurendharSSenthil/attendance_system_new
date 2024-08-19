@@ -8,7 +8,7 @@ const authenticateToken = require("../Middleware/middleware");
 
 const createStudentCollection = require("../Models/studentModel");
 const Class = require("../Models/courseModel");
-
+const createReportCollection = require("../Models/reportModel");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
@@ -99,6 +99,23 @@ router.delete("/delete-student", authenticateToken, async (req, res) => {
 	}
 });
 
+router.post("/unfreeze", authenticateToken, async (req, res) => {
+	const { coursecode, date, hr } = req.body;
+	try {
+		const reportCollection = createReportCollection(coursecode);
+		const report = await reportCollection.findOneAndUpdate(
+			{ coursecode, date, hr },
+			{ $set: { freeze: false, isExpired: false } }
+		);
+		console.log("Unfreeze attendance:", report);
+		return res
+			.status(200)
+			.json({ message: "Unlocked attendance successfully", report });
+	} catch (err) {
+		console.error("Error Unfreeze attendance:", err);
+		return res.status(500).send("Internal Server Error");
+	}
+});
 // Create or update course and students from CSV file
 router.post(
 	"/create-course",
