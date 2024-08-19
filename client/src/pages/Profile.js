@@ -1,5 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Card, Row, Col, List, Typography, Spin, Divider } from "antd";
+import {
+	Card,
+	Row,
+	Col,
+	List,
+	Typography,
+	Spin,
+	Divider,
+	Button,
+	message,
+} from "antd";
 import { url } from "../Backendurl";
 
 const { Title, Text } = Typography;
@@ -26,6 +36,7 @@ const Profile = () => {
 	const backgroundColor_custom = `#${Math.floor(
 		Math.random() * 16777215
 	).toString(16)}`;
+
 	useEffect(() => {
 		fetch(`${url}/students/profile`, {
 			headers: {
@@ -43,11 +54,48 @@ const Profile = () => {
 			});
 	}, []);
 
+	const handleRemoveRep = async (rep, coursecode) => {
+		try {
+			const response = await fetch(`${url}/admin/remove-rep`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: JSON.stringify({
+					_id: rep._id,
+					username: rep.username,
+					coursecode: coursecode,
+				}),
+			});
+
+			const result = await response.json();
+
+			if (response.ok) {
+				message.success("Representative removed successfully!");
+				// Refresh profile data after removal
+				setProfile((prevProfile) => {
+					return {
+						...prevProfile,
+						reps: prevProfile.reps.map((repsList) =>
+							repsList.filter((r) => r._id !== rep._id)
+						),
+					};
+				});
+			} else {
+				message.error(result.message || "Failed to remove representative");
+			}
+		} catch (error) {
+			console.error("Error removing representative:", error);
+			message.error("Failed to remove representative");
+		}
+	};
+
 	if (loading) {
 		return <Spin size="large" className="block mx-auto mt-20" />;
 	}
 
-	const { fac, user, hrs, stdCount, reps } = profile;
+	const { fac, user, hrs, reps } = profile;
 
 	return (
 		<div>
@@ -106,8 +154,8 @@ const Profile = () => {
 							<Text strong>Year:</Text> <Text>{course.dept}</Text>
 						</List.Item>
 						<List.Item>
-							<Text strong>Representative:</Text>{" "}
-							{reps[0].map((rep) => (
+							<Text strong>Representative(s):</Text>{" "}
+							{reps[index].map((rep) => (
 								<Card
 									key={rep._id}
 									title={`Representative: ${rep.username}`}
@@ -125,16 +173,25 @@ const Profile = () => {
 											<Text strong>Representative password:</Text>{" "}
 											<Text>{rep.password}</Text>
 										</List.Item>
+										<List.Item>
+											<Button
+												type="primary"
+												danger
+												onClick={() => handleRemoveRep(rep, course.coursecode)}
+											>
+												Remove Representative
+											</Button>
+										</List.Item>
 									</List>
 								</Card>
 							))}
 						</List.Item>
 						<List.Item>
-							<Text strong>Total Hours:</Text>{" "}
-							<Text>{course.students.length}</Text>
+							<Text strong>Total Hours Taken:</Text> <Text>{hrs[index]}</Text>
 						</List.Item>
 						<List.Item>
-							<Text strong>Number of Students:</Text> <Text>{hrs[index]}</Text>
+							<Text strong>Number of Students Enrolled:</Text>{" "}
+							<Text>{course.students.length}</Text>
 						</List.Item>
 					</List>
 				</Card>

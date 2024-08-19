@@ -157,7 +157,7 @@ const AttendanceTable = ({
 							Save Attendance
 						</Button>
 					)}
-					{localData.length > 0 && !exp && freeze && (
+					{/* {localData.length > 0 && !exp && freeze && (
 						<button
 							type="button"
 							onClick={() => setFreeze(false)}
@@ -166,11 +166,11 @@ const AttendanceTable = ({
 						>
 							UnFreeze
 						</button>
-					)}
+					)} */}
 					{localData.length > 0 && exp && freeze && (
 						<Alert
 							// message="warning"
-							description="The attendance record has been frozen."
+							description="The attendance record has been frozen.Kindly contact your faculty!"
 							type="warning"
 							// showIcon
 							closable

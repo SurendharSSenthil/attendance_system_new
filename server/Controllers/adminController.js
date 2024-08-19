@@ -90,8 +90,71 @@ const addRep = async (req, res) => {
 	}
 };
 
+const removeRep = async (req, res) => {
+	let data = req.body;
+	data["role"] = "U";
+	console.log("Received Data:", data, req.user.id);
+
+	try {
+		// Log the query parameters
+		console.log("Query Parameters: ", {
+			facultyId: req.user.id,
+			coursecode: data.coursecode,
+		});
+
+		// Find the faculty classes where the representative should be removed
+		const facultyClasses = await classmodel.find({
+			faculty: { $in: [req.user.id] },
+		});
+		if (facultyClasses.length === 0) {
+			return res.status(404).json({ message: "Faculty not found" });
+		}
+
+		// Find the representative in the admin collection
+		const existingUser = await admin.findOne({ username: data.username });
+		if (!existingUser) {
+			return res.status(400).json({ message: "Username does not exist!" });
+		}
+
+		// Log facultyClasses to check if the representative is associated with any class
+		console.log("Faculty Classes Found: ", facultyClasses);
+
+		// Remove the representative's ID from the faculty array in classmodel
+		const updateResult = await classmodel.updateMany(
+			{
+				faculty: { $in: [req.user.id] },
+				coursecode: data.coursecode,
+			},
+			{ $pull: { faculty: existingUser._id } } // Ensure existingUser._id is an ObjectId
+		);
+
+		// Log the update result for debugging
+		console.log("Update Result:", updateResult);
+
+		// Check if the representative was actually pulled from any document
+		if (updateResult.matchedCount === 0) {
+			console.warn("No matching documents found for the representative.");
+			return res.status(404).json({
+				message: "No matching documents found for the representative.",
+			});
+		}
+
+		// Remove the representative from the admin collection
+		const removedRep = await admin.deleteOne({ _id: existingUser._id });
+
+		console.log("Representative removed from admin:", removedRep);
+		return res
+			.status(200)
+			.json({ message: "Representative removed", removedRep });
+	} catch (err) {
+		console.error("Error at removing representative:", err);
+		return res.status(500).send("Internal Server Error");
+	}
+};
+
 module.exports = {
 	auth,
 	register,
 	addRep,
+	removeRep,
 };

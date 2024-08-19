@@ -15,6 +15,7 @@ import SignUp from "./pages/SignUp";
 import EditData from "./pages/EditData";
 import UnlockAttendance from "./pages/UnlockAttendance";
 import Profile from "./pages/Profile";
+import NotFound from "./pages/NotFound";
 
 const App = () => {
 	const [auth, setAuth] = useState(false);
@@ -41,6 +42,14 @@ const App = () => {
 			setAuth(false);
 		}
 	}, []);
+
+	const getDefaultPage = () => {
+		return user.role === "A" ? (
+			<Profile setAuth={setAuth} user={user} />
+		) : (
+			<Attendance setAuth={setAuth} user={user} />
+		);
+	};
 
 	return (
 		<Router>
@@ -77,36 +86,81 @@ const App = () => {
 						)
 					}
 				>
-					{/* Default Route - Attendance */}
-					<Route index element={<Attendance setAuth={setAuth} user={user} />} />
+					{/* Default Route based on User Role */}
+					<Route
+						index
+						element={
+							user.role === "U" ? (
+								<Attendance setAuth={setAuth} user={user} />
+							) : (
+								getDefaultPage()
+							)
+						}
+					/>
 
 					{/* Dashboard Route */}
 					<Route
 						path="dashboard"
-						element={<Dashboard setAuth={setAuth} user={user} />}
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<Dashboard setAuth={setAuth} user={user} />
+							)
+						}
+					/>
+					<Route
+						path="attendance"
+						element={<Attendance setAuth={setAuth} user={user} />}
 					/>
 					<Route
 						path="profile"
-						element={<Profile setAuth={setAuth} user={user} />}
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<Profile setAuth={setAuth} user={user} />
+							)
+						}
 					/>
 
 					{/* Students Route */}
 					<Route
 						path="students"
-						element={<Students setAuth={setAuth} user={user} />}
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<Students setAuth={setAuth} user={user} />
+							)
+						}
 					/>
 					<Route
 						path="edit"
-						element={<EditData setAuth={setAuth} user={user} />}
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<EditData setAuth={setAuth} user={user} />
+							)
+						}
 					/>
 					<Route
 						path="unlock-attendance"
-						element={<UnlockAttendance setAuth={setAuth} user={user} />}
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<UnlockAttendance setAuth={setAuth} user={user} />
+							)
+						}
 					/>
-				</Route>
 
-				{/* Redirect any unknown routes */}
-				<Route path="*" element={<Navigate to="/" />} />
+					{/* 404 Route */}
+				</Route>
+				<Route path="404" element={<NotFound />} />
+				{/* Redirect any unknown routes to 404 */}
+				<Route path="*" element={<Navigate to="/404" />} />
 			</Routes>
 		</Router>
 	);
