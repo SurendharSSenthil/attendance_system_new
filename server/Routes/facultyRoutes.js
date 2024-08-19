@@ -33,6 +33,55 @@ router.get("/faculty-data", authenticateToken, async (req, res) => {
 	}
 });
 
+router.get("/profile", authenticateToken, async (req, res) => {
+	try {
+		const { id } = req.user;
+		console.log(id);
+		const fac = await admin.findById(id);
+		const user = await Class.find({ faculty: { $in: [id] } });
+		const courseLen = user.length;
+		let stdCount = [];
+		for (let x = 0; x < courseLen; x++) {
+			stdCount[x] = user[x].students.length;
+		}
+		let hrs = [];
+		for (let x = 0; x < courseLen; x++) {
+			const report = createReportCollection(user[x].coursecode);
+			hrs[x] = await report.countDocuments({ freeze: true });
+		}
+		let reps = [];
+		for (let x = 0; x < courseLen; x++) {
+			let repCount = user[x].faculty.length;
+			const rep = [];
+			for (let i = 0; i < repCount; i++) {
+				const useradmin = await admin.findById(user[x].faculty[i]);
+				if (useradmin && useradmin.role === "U") {
+					rep.push(useradmin);
+				}
+				console.log(useradmin);
+			}
+			reps.push(rep);
+		}
+
+		console.log(
+			fac,
+			user,
+			"courselen",
+			courseLen,
+			"countstd",
+			stdCount,
+			"hours",
+			hrs,
+			"Reps",
+			reps
+		);
+		res.json({ fac, user, hrs, stdCount, reps });
+	} catch (error) {
+		console.error("Error fetching user profile:", error);
+		res.status(500).send("Internal Server Error");
+	}
+});
+
 // Fetch all students for a specific course
 router.get("/:coursecode", authenticateToken, async (req, res) => {
 	const { coursecode } = req.params;

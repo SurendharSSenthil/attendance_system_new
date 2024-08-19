@@ -9,6 +9,7 @@ import {
 	MenuUnfoldOutlined,
 	EditOutlined,
 	UnlockOutlined,
+	UserOutlined,
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
@@ -37,24 +38,30 @@ const Sidebar = ({ user }) => {
 	if (user?.role === "A") {
 		items.push({
 			key: "2",
+			icon: <UserOutlined />,
+			label: "Profile",
+			path: "/profile",
+		});
+		items.push({
+			key: "3",
 			icon: <DashboardOutlined />,
 			label: "Dashboard",
 			path: "/Dashboard",
 		});
 		items.push({
-			key: "3",
+			key: "4",
 			icon: <PieChartOutlined />,
 			label: "Summary",
 			path: "/students",
 		});
 		items.push({
-			key: "4",
+			key: "5",
 			icon: <EditOutlined />,
 			label: "Edit-Data",
 			path: "/edit",
 		});
 		items.push({
-			key: "5",
+			key: "6",
 			icon: <UnlockOutlined />,
 			label: "unlock-attendance",
 			path: "/unlock-attendance",

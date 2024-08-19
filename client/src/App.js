@@ -14,6 +14,7 @@ import RegisterFaculty from "./pages/RegisterFaculty";
 import SignUp from "./pages/SignUp";
 import EditData from "./pages/EditData";
 import UnlockAttendance from "./pages/UnlockAttendance";
+import Profile from "./pages/Profile";
 
 const App = () => {
 	const [auth, setAuth] = useState(false);
@@ -83,6 +84,10 @@ const App = () => {
 					<Route
 						path="dashboard"
 						element={<Dashboard setAuth={setAuth} user={user} />}
+					/>
+					<Route
+						path="profile"
+						element={<Profile setAuth={setAuth} user={user} />}
 					/>
 
 					{/* Students Route */}
