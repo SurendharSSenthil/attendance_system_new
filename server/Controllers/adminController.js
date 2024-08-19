@@ -1,6 +1,7 @@
 const admin = require("../Models/adminModel");
 const jwt = require("jsonwebtoken");
 require("dotenv").config();
+const classmodel = require("../Models/courseModel");
 
 const register = async (req, res) => {
 	let data = req.body;
@@ -59,20 +60,32 @@ const auth = async (req, res) => {
 const addRep = async (req, res) => {
 	let data = req.body;
 	data["role"] = "U";
-	console.log(data);
+	console.log("Received Data:", data, req.user.id);
+
 	try {
-		const user = await admin.find({ username: data.username });
-		console.log(user);
-		if (user.length > 0) {
+		const facultyClasses = await classmodel.find({
+			faculty: { $in: [req.user.id] },
+		});
+		if (facultyClasses.length === 0) {
+			return res.status(404).json({ message: "Faculty not found" });
+		}
+		const existingUser = await admin.findOne({ username: data.username });
+		if (existingUser) {
 			return res.status(400).json({ message: "Username already exists!" });
 		}
+
 		const rep = new admin(data);
 		await rep.save();
 
-		console.log("New Representative Added", rep);
-		return res.status(201).json({ message: "New representative added" });
+		await classmodel.updateMany(
+			{ faculty: { $in: [req.user.id] }, coursecode: data.coursecode },
+			{ $push: { faculty: rep._id } }
+		);
+
+		console.log("New Representative Added:", rep);
+		return res.status(201).json({ message: "New representative added", rep });
 	} catch (err) {
-		console.log("Error at creating representative!", err);
+		console.error("Error at creating representative:", err);
 		return res.status(500).send("Internal Server Error");
 	}
 };

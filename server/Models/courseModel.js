@@ -11,7 +11,7 @@ const classSchema = new mongoose.Schema(
 			required: true,
 		},
 		faculty: {
-			type: mongoose.Schema.Types.ObjectId,
+			type: [mongoose.Schema.Types.ObjectId],
 			ref: "Admin",
 			required: true,
 		},

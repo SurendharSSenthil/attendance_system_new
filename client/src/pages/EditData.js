@@ -147,7 +147,7 @@ const EditData = ({ setAuth, user }) => {
 			message.success(result.message);
 			showModal2(false);
 			form2.resetFields();
-			fetchStudents();
+			// fetchStudents();
 		} catch (err) {
 			console.error("Error adding Admin:", err);
 			message.error("Failed to add admin. Please check the details.");
