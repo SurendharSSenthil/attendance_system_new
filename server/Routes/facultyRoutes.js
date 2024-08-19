@@ -100,11 +100,13 @@ router.delete("/delete-student", authenticateToken, async (req, res) => {
 });
 
 router.post("/unfreeze", authenticateToken, async (req, res) => {
-	const { coursecode, date, hr } = req.body;
+	const { coursecode, date, hour } = req.body;
+	console.log(coursecode, date, hour);
 	try {
 		const reportCollection = createReportCollection(coursecode);
-		const report = await reportCollection.findOneAndUpdate(
-			{ coursecode, date, hr },
+		console.log(reportCollection);
+		const report = await reportCollection.updateOne(
+			{ coursecode, date, hr: hour },
 			{ $set: { freeze: false, isExpired: false } }
 		);
 		console.log("Unfreeze attendance:", report);
