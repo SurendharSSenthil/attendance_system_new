@@ -9,6 +9,7 @@ import {
 	Divider,
 	Button,
 	message,
+	Modal,
 } from "antd";
 import { url } from "../Backendurl";
 
@@ -33,6 +34,8 @@ const Logo = ({ username }) => {
 const Profile = () => {
 	const [profile, setProfile] = useState(null);
 	const [loading, setLoading] = useState(true);
+	const [modal, setModal] = useState(false);
+	const [cc, setCC] = useState("");
 	const backgroundColor_custom = `#${Math.floor(
 		Math.random() * 16777215
 	).toString(16)}`;
@@ -77,7 +80,6 @@ const Profile = () => {
 
 			if (response.ok) {
 				message.success("Representative removed successfully!");
-				// Refresh profile data after removal
 				setProfile((prevProfile) => {
 					return {
 						...prevProfile,
@@ -101,7 +103,11 @@ const Profile = () => {
 
 	const { fac, user, hrs, reps } = profile;
 
-	const handleRemoveCourse = async (cc) => {
+	const handleRemoveCourse = async () => {
+		if (cc === "") {
+			message.error("Course code cannot be empty");
+			return;
+		}
 		try {
 			const res = await fetch(`${url}/students/delete-course`, {
 				method: "DELETE",
@@ -114,6 +120,7 @@ const Profile = () => {
 			if (res.status === 200) {
 				message.success(`${cc} course is successfully deleted`);
 				fetchProfile();
+				setModal(false);
 			}
 		} catch (err) {
 			console.log(err);
@@ -174,7 +181,10 @@ const Profile = () => {
 							<Button
 								type="primary"
 								danger
-								onClick={() => handleRemoveCourse(course.coursecode)}
+								onClick={() => {
+									setModal(true);
+									setCC(course.coursecode);
+								}}
 							>
 								Remove Course
 							</Button>
@@ -233,6 +243,26 @@ const Profile = () => {
 					</List>
 				</Card>
 			))}
+			<Modal
+				title="⚠️ Confirm Course Deletion"
+				open={modal}
+				onOk={handleRemoveCourse}
+				onCancel={() => setModal(false)}
+				okText="Yes, Delete"
+				cancelText="Cancel"
+				centered
+				okButtonProps={{ danger: true }}
+			>
+				<div style={{ padding: "10px" }}>
+					<p>
+						This action is irreversible and will remove all records associated
+						with this course.
+					</p>
+					<p style={{ color: "red", fontWeight: "bold" }}>
+						Please proceed with caution!
+					</p>
+				</div>
+			</Modal>
 		</div>
 	);
 };
