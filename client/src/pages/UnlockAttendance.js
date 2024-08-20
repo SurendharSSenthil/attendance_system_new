@@ -232,7 +232,7 @@ const UnlockAttendance = () => {
 							dataSource={data}
 							columns={columns}
 							pagination={false}
-							className="overflow-auto bg-white"
+							className="overflow-x-auto bg-white"
 						/>
 					</div>
 				) : null}
