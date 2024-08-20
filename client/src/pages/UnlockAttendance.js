@@ -223,16 +223,16 @@ const UnlockAttendance = () => {
 					</button>
 				</Col>
 			</Row>
-			<Row>
+			<Row className=" pt-4">
 				{loading ? (
 					<Spin tip="Loading..." />
 				) : data.length > 0 ? (
-					<div className="flex flex-col gap-4">
+					<div className="flex flex-col gap-4 overflow-x-auto bg-white">
 						<Table
 							dataSource={data}
 							columns={columns}
 							pagination={false}
-							className="overflow-x-auto bg-white"
+							className=" bg-white"
 						/>
 					</div>
 				) : null}

@@ -53,12 +53,13 @@ const Dashboard = () => {
 				}),
 			});
 
-			if (!response.ok) {
-				throw new Error("Network response was not ok");
+			if (response.ok) {
+				const data = await response.json();
+				setStudentData(data[0]);
+			} else {
+				message.error("No student found!");
+				setStudentData(null);
 			}
-
-			const data = await response.json();
-			setStudentData(data[0]);
 		} catch (error) {
 			message.error("There was an error processing your request.");
 			console.error("Fetch error: ", error);

@@ -38,6 +38,10 @@ const Profile = () => {
 	).toString(16)}`;
 
 	useEffect(() => {
+		fetchProfile();
+	}, []);
+
+	const fetchProfile = async () => {
 		fetch(`${url}/students/profile`, {
 			headers: {
 				Authorization: `Bearer ${localStorage.getItem("token")}`,
@@ -52,7 +56,7 @@ const Profile = () => {
 				console.error("Error fetching profile data:", error);
 				setLoading(false);
 			});
-	}, []);
+	};
 
 	const handleRemoveRep = async (rep, coursecode) => {
 		try {
@@ -97,6 +101,26 @@ const Profile = () => {
 
 	const { fac, user, hrs, reps } = profile;
 
+	const handleRemoveCourse = async (cc) => {
+		try {
+			const res = await fetch(`${url}/students/delete-course`, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: JSON.stringify({ coursecode: cc }),
+			});
+			if (res.status === 200) {
+				message.success(`${cc} course is successfully deleted`);
+				fetchProfile();
+			}
+		} catch (err) {
+			console.log(err);
+			message.error("Failed to delete the course");
+		}
+	};
+
 	return (
 		<div>
 			<Title level={2} className="text-center text-blue-500">
@@ -115,7 +139,7 @@ const Profile = () => {
 						Faculty Details
 					</h3>
 					<Card bordered={false} className="bg-white shadow-md">
-						<List>
+						<List size="medium">
 							<List.Item>
 								<Text strong>Username:</Text>{" "}
 								<Text className="font-semibold ">{fac.username}</Text>
@@ -142,11 +166,24 @@ const Profile = () => {
 			{user.map((course, index) => (
 				<Card
 					key={course._id}
-					title={`Course: ${course.coursename} (${course.coursecode})`}
+					title={
+						<div className="flex justify-between items-center">
+							<span>
+								Course: {course.coursename} ({course.coursecode})
+							</span>
+							<Button
+								type="primary"
+								danger
+								onClick={() => handleRemoveCourse(course.coursecode)}
+							>
+								Remove Course
+							</Button>
+						</div>
+					}
 					bordered={false}
 					className="mb-5 bg-white shadow-md"
 				>
-					<List size="small">
+					<List size="medium">
 						<List.Item>
 							<Text strong>Class:</Text> <Text>{course.class}</Text>
 						</List.Item>

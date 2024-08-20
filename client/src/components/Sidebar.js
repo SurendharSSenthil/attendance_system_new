@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { Layout, Menu } from "antd";
 import {
 	PieChartOutlined,
@@ -16,9 +16,13 @@ const { Sider } = Layout;
 
 const Sidebar = ({ user }) => {
 	const [collapsed, setCollapsed] = useState(false);
-	const [selectedKey, setSelectedKey] = useState("1");
+	const location = useLocation();
+	const [selectedKey, setSelectedKey] = useState(() => {
+		if (user?.role === "A") return "2";
+		return "1";
+	});
 
-	const handleMenuClick = (path, key) => {
+	const handleMenuClick = (key) => {
 		setSelectedKey(key);
 	};
 
@@ -36,64 +40,54 @@ const Sidebar = ({ user }) => {
 	];
 
 	if (user?.role === "A") {
-		items.push({
-			key: "2",
-			icon: <UserOutlined />,
-			label: "Profile",
-			path: "/profile",
-		});
-		items.push({
-			key: "3",
-			icon: <DashboardOutlined />,
-			label: "Dashboard",
-			path: "/Dashboard",
-		});
-		items.push({
-			key: "4",
-			icon: <PieChartOutlined />,
-			label: "Summary",
-			path: "/students",
-		});
-		items.push({
-			key: "5",
-			icon: <EditOutlined />,
-			label: "Edit-Data",
-			path: "/edit",
-		});
-		items.push({
-			key: "6",
-			icon: <UnlockOutlined />,
-			label: "unlock-attendance",
-			path: "/unlock-attendance",
-		});
+		items.push(
+			{ key: "2", icon: <UserOutlined />, label: "Profile", path: "/profile" },
+			{
+				key: "3",
+				icon: <DashboardOutlined />,
+				label: "Dashboard",
+				path: "/dashboard",
+			},
+			{
+				key: "4",
+				icon: <PieChartOutlined />,
+				label: "Summary",
+				path: "/students",
+			},
+			{ key: "5", icon: <EditOutlined />, label: "Edit-Data", path: "/edit" },
+			{
+				key: "6",
+				icon: <UnlockOutlined />,
+				label: "Unlock Attendance",
+				path: "/unlock-attendance",
+			}
+		);
 	}
+
+	useEffect(() => {
+		const currentPath = location.pathname;
+		const currentItem = items.find((item) => item.path === currentPath);
+		if (currentItem) {
+			setSelectedKey(currentItem.key);
+		}
+	}, [location]);
 
 	return (
 		<Sider
 			breakpoint="lg"
 			collapsedWidth="0"
-			onBreakpoint={(broken) => {
-				console.log(broken);
-			}}
-			onCollapse={(collapsed, type) => {
-				console.log(collapsed, type);
-				setCollapsed(collapsed);
-			}}
+			onCollapse={(collapsed) => setCollapsed(collapsed)}
 		>
 			<div className="demo-logo-vertical" />
-			{/* <img src={logo} alt='tngov' height='60px' width='60px' className='mx-auto m-4'/> */}
 			<Menu
 				theme="dark"
 				mode="inline"
-				defaultSelectedKeys={[selectedKey]}
+				selectedKeys={[selectedKey]}
 				className="sticky top-4"
 			>
 				{items.map((item) => (
 					<Menu.Item key={item.key} icon={item.icon}>
-						<Link
-							to={item.path}
-							onClick={() => handleMenuClick(item.path, item.key)}
-						>
+						<Link to={item.path} onClick={() => handleMenuClick(item.key)}>
 							{item.label}
 						</Link>
 					</Menu.Item>

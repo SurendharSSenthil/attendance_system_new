@@ -167,6 +167,48 @@ router.post("/unfreeze", authenticateToken, async (req, res) => {
 		return res.status(500).send("Internal Server Error");
 	}
 });
+
+router.delete("/delete-course", authenticateToken, async (req, res) => {
+	const { coursecode } = req.body;
+	const { id } = req.user;
+
+	try {
+		// Create collections for the specific course
+		const StudentCollection = createStudentCollection(coursecode);
+		const reportCollection = createReportCollection(coursecode);
+
+		// Drop the entire student collection related to the course
+		await StudentCollection.collection.drop();
+
+		// Drop the entire report collection related to the course
+		await reportCollection.collection.drop();
+
+		// Delete the course document from the main course collection
+		const course = await Class.findOneAndDelete({
+			coursecode,
+			faculty: { $in: [id] },
+		});
+
+		if (!course) {
+			return res.status(404).json({ message: "Course not found" });
+		}
+
+		console.log("Deleted Course:", course);
+		return res
+			.status(200)
+			.json({ message: "Course deleted successfully", course });
+	} catch (err) {
+		console.error("Error deleting course:", err);
+
+		// Handle specific errors when a collection doesn't exist
+		if (err.code === 26) {
+			return res.status(400).json({ message: "Collection does not exist." });
+		}
+
+		return res.status(500).json({ message: err.message });
+	}
+});
+
 // Create or update course and students from CSV file
 router.post(
 	"/create-course",

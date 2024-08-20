@@ -301,10 +301,13 @@ const FinalStudentData = async (req, res) => {
 		]);
 
 		console.log("@finalstudentdata:", result);
-		res.status(200).send(result);
+		if (result.length === 0) {
+			return res.status(404).json({ message: "No student found." });
+		}
+		return res.status(200).send(result);
 	} catch (err) {
 		console.error(err);
-		res.status(500).send({ error: err.message });
+		return res.status(500).send({ error: err.message });
 	}
 };
 
