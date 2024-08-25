@@ -11,11 +11,13 @@ import {
 	message,
 	Modal,
 } from "antd";
+import { useNavigate } from "react-router-dom";
 import { url } from "../Backendurl";
 
 const { Title, Text } = Typography;
 
 const Logo = ({ username }) => {
+	if (!username) return null;
 	const initial = username.charAt(0).toUpperCase();
 	const backgroundColor_custom = `#${Math.floor(
 		Math.random() * 16777215
@@ -31,34 +33,44 @@ const Logo = ({ username }) => {
 	);
 };
 
-const Profile = () => {
+const Profile = ({ setAuth }) => {
 	const [profile, setProfile] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [modal, setModal] = useState(false);
 	const [cc, setCC] = useState("");
+	const navigate = useNavigate();
 	const backgroundColor_custom = `#${Math.floor(
 		Math.random() * 16777215
 	).toString(16)}`;
-
 	useEffect(() => {
 		fetchProfile();
 	}, []);
 
 	const fetchProfile = async () => {
-		fetch(`${url}/students/profile`, {
-			headers: {
-				Authorization: `Bearer ${localStorage.getItem("token")}`,
-			},
-		})
-			.then((response) => response.json())
-			.then((data) => {
-				setProfile(data);
-				setLoading(false);
-			})
-			.catch((error) => {
-				console.error("Error fetching profile data:", error);
-				setLoading(false);
+		try {
+			const response = await fetch(`${url}/students/profile`, {
+				headers: {
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
 			});
+
+			if (response.status === 403) {
+				message.error("Invalid token. Redirecting to login...");
+				localStorage.removeItem("token");
+				localStorage.removeItem("user");
+				setAuth(false);
+				navigate("/auth");
+				return;
+			}
+
+			const data = await response.json();
+			setProfile(data);
+			setLoading(false);
+		} catch (error) {
+			console.error("Error fetching profile data:", error);
+			message.error("Failed to fetch profile data.");
+			setLoading(false);
+		}
 	};
 
 	const handleRemoveRep = async (rep, coursecode) => {
@@ -78,15 +90,21 @@ const Profile = () => {
 
 			const result = await response.json();
 
+			if (response.status === 401) {
+				message.error("Invalid token. Redirecting to login...");
+				navigate("/auth");
+				return;
+			}
+
 			if (response.ok) {
 				message.success("Representative removed successfully!");
 				setProfile((prevProfile) => {
-					return {
-						...prevProfile,
-						reps: prevProfile.reps.map((repsList) =>
-							repsList.filter((r) => r._id !== rep._id)
-						),
-					};
+					const updatedReps = prevProfile.reps.map((repsList, index) =>
+						index === coursecode
+							? repsList.filter((r) => r._id !== rep._id)
+							: repsList
+					);
+					return { ...prevProfile, reps: updatedReps };
 				});
 			} else {
 				message.error(result.message || "Failed to remove representative");
@@ -96,12 +114,6 @@ const Profile = () => {
 			message.error("Failed to remove representative");
 		}
 	};
-
-	if (loading) {
-		return <Spin size="large" className="block mx-auto mt-20" />;
-	}
-
-	const { fac, user, hrs, reps } = profile;
 
 	const handleRemoveCourse = async () => {
 		if (cc === "") {
@@ -117,16 +129,31 @@ const Profile = () => {
 				},
 				body: JSON.stringify({ coursecode: cc }),
 			});
+
+			if (res.status === 401) {
+				message.error("Invalid token. Redirecting to login...");
+				navigate("/auth");
+				return;
+			}
+
 			if (res.status === 200) {
 				message.success(`${cc} course is successfully deleted`);
 				fetchProfile();
 				setModal(false);
+			} else {
+				message.error("Failed to delete the course");
 			}
 		} catch (err) {
 			console.log(err);
 			message.error("Failed to delete the course");
 		}
 	};
+
+	if (loading) {
+		return <Spin size="large" className="block mx-auto mt-20" />;
+	}
+
+	const { fac = {}, user = [], hrs = [], reps = [] } = profile || {};
 
 	return (
 		<div>
@@ -202,7 +229,7 @@ const Profile = () => {
 						</List.Item>
 						<List.Item>
 							<Text strong>Representative(s):</Text>{" "}
-							{reps[index].map((rep) => (
+							{reps[index]?.map((rep) => (
 								<Card
 									key={rep._id}
 									title={`Representative: ${rep.username}`}
