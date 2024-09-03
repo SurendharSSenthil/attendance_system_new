@@ -20,7 +20,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
-	const currentDateTime = new Date().toLocaleString();
+	const currentDateTime = new Date().toLocaleString("en-IN", {
+		timeZone: "Asia/Kolkata",
+	});
 	console.log(
 		`Request Method: ${req.method}, Request Path: ${req.path}, Request Time: ${currentDateTime}, Request IP: ${req.ip}`
 	);
