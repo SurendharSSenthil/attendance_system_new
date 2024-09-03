@@ -23,8 +23,10 @@ app.use((req, res, next) => {
 	const currentDateTime = new Date().toLocaleString("en-IN", {
 		timeZone: "Asia/Kolkata",
 	});
+	const clientIp = req.headers["x-forwarded-for"]?.split(",").shift() || req.ip;
+
 	console.log(
-		`Request Method: ${req.method}, Request Path: ${req.path}, Request Time: ${currentDateTime}, Request IP: ${req.ip}`
+		`Request Method: ${req.method}, Request Path: ${req.path}, Request Time: ${currentDateTime}, Request IP: ${clientIp}`
 	);
 	next();
 });
