@@ -45,7 +45,7 @@ const EditData = ({ setAuth, user }) => {
 				setLoading(false);
 			}
 		};
-
+		document.title = "ATTENDANCE SYSTEM | EDIT";
 		fetchCourses();
 	}, []);
 
@@ -121,7 +121,6 @@ const EditData = ({ setAuth, user }) => {
 			message.success(result.message);
 			showModal(false);
 			form.resetFields();
-			fetchStudents();
 		} catch (err) {
 			console.error("Error adding student:", err);
 			message.error("Failed to add student. Please check the details.");

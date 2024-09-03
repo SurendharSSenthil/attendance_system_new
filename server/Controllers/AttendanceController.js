@@ -322,9 +322,26 @@ const FinalStudentData = async (req, res) => {
 	}
 };
 
+const deleteRecord = async (req, res) => {
+	const { date, hr, dept, yr, coursecode } = req.body;
+	console.log(date, hr, dept, yr, coursecode);
+	const ReportCollection = createReportCollection(coursecode);
+	try {
+		const record = await ReportCollection.findOneAndDelete({ date, hr });
+		console.log(record);
+		return res
+			.status(200)
+			.send({ message: "Attendance record deleted successfully." });
+	} catch (err) {
+		console.error(err);
+		return res.status(500).send({ error: err.message });
+	}
+};
+
 module.exports = {
 	updateAttendance,
 	fetchData,
 	studentDashboard,
 	FinalStudentData,
+	deleteRecord,
 };

@@ -5,6 +5,7 @@ const {
 	updateAttendance,
 	studentDashboard,
 	FinalStudentData,
+	deleteRecord,
 } = require("../Controllers/AttendanceController");
 const authenticateToken = require("../Middleware/middleware");
 
@@ -12,6 +13,7 @@ const authenticateToken = require("../Middleware/middleware");
 router.post("/update", authenticateToken, updateAttendance);
 
 router.post("/student-dashboard", authenticateToken, studentDashboard);
+router.delete("/record", authenticateToken, deleteRecord);
 
 router.post("/getDashboardData", authenticateToken, FinalStudentData);
 // Fetch attendance data for a specific date

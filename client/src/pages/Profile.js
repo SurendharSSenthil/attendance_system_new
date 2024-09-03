@@ -66,10 +66,12 @@ const Profile = ({ setAuth }) => {
 			const data = await response.json();
 			setProfile(data);
 			setLoading(false);
+			document.title = data?.fac?.username || "ATTENDANCE SYSTEM | PROFILE";
 		} catch (error) {
 			console.error("Error fetching profile data:", error);
 			message.error("Failed to fetch profile data.");
 			setLoading(false);
+			document.title = "ATTENDANCE SYSTEM | PROFILE";
 		}
 	};
 

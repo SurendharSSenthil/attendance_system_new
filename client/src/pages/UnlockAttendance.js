@@ -1,15 +1,6 @@
 import { UnlockOutlined } from "@ant-design/icons";
 import { useState, useEffect } from "react";
-import {
-	Card,
-	Select,
-	Row,
-	Col,
-	message,
-	Spin,
-	Table,
-	notification,
-} from "antd";
+import { Card, Select, Row, Col, message, Spin, Modal, Table } from "antd";
 import moment from "moment";
 import { url } from "../Backendurl";
 
@@ -22,6 +13,9 @@ const UnlockAttendance = () => {
 	const [yr, setYr] = useState();
 	const [dept, setDept] = useState("");
 	const [data, setData] = useState([]);
+	const [modal, setModal] = useState(false);
+	const [date, setDate] = useState("");
+	const [hr, setHr] = useState();
 
 	useEffect(() => {
 		const fetchCourses = async () => {
@@ -43,7 +37,7 @@ const UnlockAttendance = () => {
 				setLoading(false);
 			}
 		};
-
+		document.title = "ATTENDANCE SYSTEM | UNLOCK";
 		fetchCourses();
 	}, []);
 
@@ -105,6 +99,30 @@ const UnlockAttendance = () => {
 		}
 	};
 
+	const handleDelete = async () => {
+		console.log(coursecode, date, hr, yr, dept);
+		try {
+			const res = await fetch(`${url}/attendance/record`, {
+				method: "DELETE",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${localStorage.getItem("token")}`,
+				},
+				body: JSON.stringify({ coursecode, date, hr, yr, dept }),
+			});
+
+			message.success("the record is successfully deleted");
+			fetchReport();
+		} catch (err) {
+			console.log(err);
+			message.error("Error occurred. Please try again");
+		} finally {
+			setDate("");
+			setHr(0);
+			setModal(false);
+		}
+	};
+
 	const columns = [
 		{
 			title: "Registration Number",
@@ -123,13 +141,25 @@ const UnlockAttendance = () => {
 		data[0].courses[0].statuses.forEach((status, index) => {
 			columns.push({
 				title: (
-					<button
-						onClick={() => handleUnfreeze(status.date, status.hour)}
-						className="text-blue-500 underline"
-					>
-						Unfreeze Hour {status.hour} (
-						{moment(status.date).format("YYYY-MM-DD")})
-					</button>
+					<div>
+						<button
+							onClick={() => handleUnfreeze(status.date, status.hour)}
+							className="text-blue-500 underline"
+						>
+							Unfreeze Hour {status.hour} (
+							{moment(status.date).format("YYYY-MM-DD")})
+						</button>
+						<button
+							onClick={() => {
+								setModal(true);
+								setDate(status.date);
+								setHr(status.hour);
+							}}
+							className="text-red-500 underline"
+						>
+							Delete record
+						</button>
+					</div>
 				),
 				key: `hour_${index + 1}`,
 				render: (_, record) => {
@@ -166,7 +196,7 @@ const UnlockAttendance = () => {
 							<Select
 								onChange={(v) => setCoursecode(v)}
 								value={coursecode}
-								options={courses.map((course) => ({
+								options={[...new Set(courses)].map((course) => ({
 									label: `${course.coursename} - ${course.coursecode}`,
 									value: course.coursecode,
 								}))}
@@ -184,7 +214,7 @@ const UnlockAttendance = () => {
 							<Select
 								onChange={(v) => setYr(v)}
 								value={yr}
-								options={yrs.map((y) => ({
+								options={[...new Set(yrs)].map((y) => ({
 									label: `${y}`,
 									value: y,
 								}))}
@@ -202,7 +232,7 @@ const UnlockAttendance = () => {
 							<Select
 								onChange={(v) => setDept(v)}
 								value={dept}
-								options={classes.map((cls) => ({
+								options={[...new Set(classes)].map((cls) => ({
 									label: `${cls}`,
 									value: cls,
 								}))}
@@ -237,6 +267,27 @@ const UnlockAttendance = () => {
 					</div>
 				) : null}
 			</Row>
+
+			<Modal
+				title="⚠️ Confirm Record Deletion"
+				open={modal}
+				onOk={handleDelete}
+				onCancel={() => setModal(false)}
+				okText="Yes, Delete"
+				cancelText="Cancel"
+				centered
+				okButtonProps={{ danger: true }}
+			>
+				<div style={{ padding: "10px" }}>
+					<p>
+						This action is irreversible and will remove all records associated
+						with this date.
+					</p>
+					<p style={{ color: "red", fontWeight: "bold" }}>
+						Please proceed with caution!
+					</p>
+				</div>
+			</Modal>
 		</div>
 	);
 };
