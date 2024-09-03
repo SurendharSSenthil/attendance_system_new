@@ -208,6 +208,17 @@ const studentDashboard = async (req, res) => {
 					},
 				},
 			},
+			// Add a sort stage within the grouping to sort statuses by date and hour
+			{
+				$addFields: {
+					statuses: {
+						$sortArray: {
+							input: "$statuses",
+							sortBy: { date: 1, hour: 1 },
+						},
+					},
+				},
+			},
 			{
 				$group: {
 					_id: "$_id.RegNo",
