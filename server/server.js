@@ -20,7 +20,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
-	console.log(`Request Method: ${req.method}, Request Path: ${req.path}`);
+	const currentDateTime = new Date().toLocaleString();
+	console.log(
+		`Request Method: ${req.method}, Request Path: ${req.path}, Request Time: ${currentDateTime}, Request IP: ${req.ip}`
+	);
 	next();
 });
 
@@ -41,7 +44,7 @@ cron.schedule("0 0 * * *", async () => {
 			const ReportCollection = createReportCollection(
 				collectionName.replace("reports_", "")
 			);
-
+			console.log(reportCollections);
 			// Update reports where the creation date is more than 7 days ago
 			await ReportCollection.updateMany(
 				{
@@ -56,7 +59,7 @@ cron.schedule("0 0 * * *", async () => {
 			console.log(ReportCollection);
 		}
 
-		console.log("Reports updated successfully");
+		console.log("CRON called - Reports updated successfully");
 	} catch (err) {
 		console.error("Error updating reports:", err);
 	}
