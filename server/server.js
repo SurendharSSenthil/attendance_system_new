@@ -18,12 +18,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.set("trust proxy", true);
 
 app.use((req, res, next) => {
 	const currentDateTime = new Date().toLocaleString("en-IN", {
 		timeZone: "Asia/Kolkata",
 	});
-	const clientIp = req.headers["x-forwarded-for"]?.split(",").shift() || req.ip;
+	const clientIp = req.headers["x-forwarded-for"] || req.ip;
 
 	console.log(
 		`Request Method: ${req.method}, Request Path: ${req.path}, Request Time: ${currentDateTime}, Request IP: ${clientIp}`
