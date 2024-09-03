@@ -1,20 +1,8 @@
 import React, { useState } from "react";
-import { Button, Form, Input, Card, message, Upload } from "antd";
+import { Button, Form, Input, Card, message, Upload, Row, Col } from "antd";
 import { UploadOutlined } from "@ant-design/icons";
 import { url } from "../Backendurl";
 import { useNavigate } from "react-router-dom";
-// const { RangePicker } = DatePicker;
-
-const formItemLayout = {
-	labelCol: {
-		xs: { span: 24 },
-		sm: { span: 6 },
-	},
-	wrapperCol: {
-		xs: { span: 24 },
-		sm: { span: 14 },
-	},
-};
 
 const RegisterFaculty = () => {
 	const [form] = Form.useForm();
@@ -75,112 +63,125 @@ const RegisterFaculty = () => {
 	const handleFileChange = ({ fileList }) => setFileList(fileList);
 
 	return (
-		<div className="bg-gray-100 flex flex-col justify-center items-center min-h-screen overflow-x-hidden">
-			<h2 className="text-slate-700 text-xl font-semibold">
-				Faculty Course Registration
-			</h2>
-			<div style={{ padding: "20px" }}>
-				<Card bordered={false}>
-					<Form
-						{...formItemLayout}
-						form={form}
-						style={{ maxWidth: 600 }}
-						onFinish={handleSubmit}
-					>
-						<Form.Item
-							label="Faculty Name"
-							name="facname"
-							rules={[
-								{
-									required: true,
-									message: "Please input the faculty name!",
-								},
-							]}
-						>
-							<Input />
-						</Form.Item>
-						<Form.Item
-							label="Course Name"
-							name="coursename"
-							rules={[
-								{
-									required: true,
-									message: "Please input the course name!",
-								},
-							]}
-						>
-							<Input />
-						</Form.Item>
-						<Form.Item
-							label="Course Code"
-							name="coursecode"
-							rules={[
-								{
-									required: true,
-									message: "Please input the course code!",
-								},
-							]}
-						>
-							<Input />
-						</Form.Item>
-						<Form.Item
-							label="Year"
-							name="year"
-							rules={[
-								{
-									required: true,
-									message: "Please input the year!",
-								},
-							]}
-						>
-							<Input />
-						</Form.Item>
-						<Form.Item
-							label="Class"
-							name="class"
-							rules={[
-								{
-									required: true,
-									message: "Please input the class!",
-								},
-							]}
-						>
-							<Input />
-						</Form.Item>
-						<div className="flex flex-col gap-2">
+		<div className="bg-gray-100 flex flex-col justify-center items-center min-h-screen p-4">
+			<Card
+				bordered={false}
+				className="w-full max-w-2xl shadow-lg rounded-lg bg-white"
+			>
+				<h2 className="text-center text-2xl font-bold text-gray-800 mb-6">
+					Faculty Course Registration
+				</h2>
+				<Form
+					form={form}
+					onFinish={handleSubmit}
+					layout="vertical"
+					className="space-y-4"
+				>
+					<Row gutter={16}>
+						<Col xs={24} sm={12}>
 							<Form.Item
-								label="Upload CSV containing RegNo and StdName"
+								label="Faculty Name"
+								name="facname"
 								rules={[
 									{
 										required: true,
-										message: "Please upload a CSV file!",
+										message: "Please input the faculty name!",
 									},
 								]}
-								className="text-wrap w-[1200px]"
 							>
-								<Upload
-									accept=".csv"
-									fileList={fileList}
-									beforeUpload={() => false} // Prevent automatic upload
-									onChange={handleFileChange}
-								>
-									<Button icon={<UploadOutlined />}>Select File</Button>
-								</Upload>
+								<Input placeholder="Enter faculty name" />
 							</Form.Item>
-						</div>
-						<Form.Item
-							wrapperCol={{
-								offset: 6,
-								span: 16,
-							}}
+						</Col>
+						<Col xs={24} sm={12}>
+							<Form.Item
+								label="Course Name"
+								name="coursename"
+								rules={[
+									{
+										required: true,
+										message: "Please input the course name!",
+									},
+								]}
+							>
+								<Input placeholder="Enter course name" />
+							</Form.Item>
+						</Col>
+					</Row>
+					<Row gutter={16}>
+						<Col xs={24} sm={12}>
+							<Form.Item
+								label="Course Code"
+								name="coursecode"
+								rules={[
+									{
+										required: true,
+										message: "Please input the course code!",
+									},
+								]}
+							>
+								<Input placeholder="Enter course code" />
+							</Form.Item>
+						</Col>
+						<Col xs={24} sm={12}>
+							<Form.Item
+								label="Year"
+								name="year"
+								rules={[
+									{
+										required: true,
+										message: "Please input the year!",
+									},
+								]}
+							>
+								<Input placeholder="Enter year" />
+							</Form.Item>
+						</Col>
+					</Row>
+					<Form.Item
+						label="Class"
+						name="class"
+						rules={[
+							{
+								required: true,
+								message: "Please input the class!",
+							},
+						]}
+					>
+						<Input placeholder="Enter class" />
+					</Form.Item>
+					<Form.Item
+						label="Upload CSV containing RegNo and StdName"
+						rules={[
+							{
+								required: true,
+								message: "Please upload a CSV file!",
+							},
+						]}
+						className="text-wrap"
+					>
+						<Upload
+							accept=".csv"
+							fileList={fileList}
+							beforeUpload={() => false} // Prevent automatic upload
+							onChange={handleFileChange}
+							className="w-full"
 						>
-							<Button type="primary" htmlType="submit" loading={loading}>
-								Submit
-							</Button>
-						</Form.Item>
-					</Form>
-				</Card>
-			</div>
+							<Button icon={<UploadOutlined />}>Select File</Button>
+						</Upload>
+					</Form.Item>
+					<Form.Item>
+						<Button
+							type="primary"
+							htmlType="submit"
+							loading={loading}
+							block
+							className="bg-gradient-to-r from-blue-500 to-indigo-500 hover:from-blue-600 hover:to-indigo-600"
+						>
+							Submit
+						</Button>
+					</Form.Item>
+				</Form>
+			</Card>
 		</div>
 	);
 };

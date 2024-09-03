@@ -5,7 +5,6 @@ const mongoose = require("mongoose");
 const fs = require("fs");
 const path = require("path");
 const authenticateToken = require("../Middleware/middleware");
-
 const createStudentCollection = require("../Models/studentModel");
 const Class = require("../Models/courseModel");
 const createReportCollection = require("../Models/reportModel");
@@ -107,7 +106,8 @@ router.post("/add-student", authenticateToken, async (req, res) => {
 
 	try {
 		const StudentModel = createStudentCollection(coursecode);
-		const user = await StudentModel.findOne({ RegNo, StdName });
+		const reportModel = createReportCollection(coursecode);
+		const user = await StudentModel.findOne({ RegNo });
 
 		if (user) {
 			return res.status(400).json({ message: "User already exists!" });
@@ -117,7 +117,12 @@ router.post("/add-student", authenticateToken, async (req, res) => {
 
 		const savedStudent = await newStudent.save();
 
-		console.log("Added Student:", savedStudent);
+		const newReport = await reportModel.updateMany(
+			{},
+			{ $push: { attendance: { RegNo, Name: StdName, status: -1 } } }
+		);
+		console.log("Added Student to all reports:", newReport);
+		console.log("Added Student to the student collection:", savedStudent);
 		return res
 			.status(200)
 			.json({ message: "Student added successfully", student: savedStudent });
@@ -132,12 +137,18 @@ router.delete("/delete-student", authenticateToken, async (req, res) => {
 
 	try {
 		const StudentCollection = createStudentCollection(coursecode);
+		const reportCollection = createReportCollection(coursecode);
 		const student = await StudentCollection.findOneAndDelete({ RegNo });
 
 		if (!student) {
 			return res.status(404).json({ message: "Student not found" });
 		}
 
+		const result = await reportCollection.updateMany(
+			{},
+			{ $pull: { attendance: { RegNo } } }
+		);
+		console.log("Deleted from reports:", result);
 		console.log("Deleted Student:", student);
 		return res
 			.status(200)
@@ -209,7 +220,21 @@ router.delete("/delete-course", authenticateToken, async (req, res) => {
 	}
 });
 
-// Create or update course and students from CSV file
+const normalizeHeader = (header) => {
+	const normalizedHeader = header.replace(/\s+/g, "").toLowerCase();
+
+	if (
+		["regno", "regnumber", "registernumber", "registerno"].includes(
+			normalizedHeader
+		)
+	) {
+		return "RegNo";
+	} else if (["stdname", "studentname", "name"].includes(normalizedHeader)) {
+		return "StdName";
+	}
+	return null;
+};
+
 router.post(
 	"/create-course",
 	authenticateToken,
@@ -223,13 +248,12 @@ router.post(
 			class: courseClass,
 		} = req.body;
 		const file = req.file;
-		console.log(req.user.id);
+
 		if (!file) {
 			return res.status(400).json({ message: "CSV file is required" });
 		}
 
 		try {
-			// Create or update course details
 			const courseData = {
 				coursename,
 				coursecode,
@@ -244,13 +268,20 @@ router.post(
 				upsert: true,
 				new: true,
 			});
-
-			// Process the CSV file
 			const students = [];
 			fs.createReadStream(file.path)
-				.pipe(csv())
+				.pipe(
+					csv({
+						mapHeaders: ({ header }) => normalizeHeader(header),
+					})
+				)
 				.on("data", (row) => {
-					students.push({ RegNo: row.RegNo, StdName: row.StdName });
+					if (row.RegNo && row.StdName) {
+						students.push({
+							RegNo: row.RegNo,
+							StdName: row.StdName,
+						});
+					}
 				})
 				.on("end", async () => {
 					try {
@@ -260,7 +291,6 @@ router.post(
 						course.students = students.map((student) => student.RegNo);
 						await course.save();
 
-						// Clean up the uploaded file
 						fs.unlinkSync(file.path);
 
 						res.status(201).json({

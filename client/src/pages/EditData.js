@@ -164,15 +164,15 @@ const EditData = ({ setAuth, user }) => {
 			dataIndex: "StdName",
 			key: "StdName",
 		},
-		// {
-		// 	title: "Remove Student",
-		// 	key: "action",
-		// 	render: (text, record) => (
-		// 		<Button type="danger" onClick={() => deleteStudent(record.RegNo)}>
-		// 			<DeleteTwoTone />
-		// 		</Button>
-		// 	),
-		// },
+		{
+			title: "Remove Student",
+			key: "action",
+			render: (text, record) => (
+				<Button type="danger" onClick={() => deleteStudent(record.RegNo)}>
+					<DeleteTwoTone />
+				</Button>
+			),
+		},
 	];
 
 	const addStudent = () => {
