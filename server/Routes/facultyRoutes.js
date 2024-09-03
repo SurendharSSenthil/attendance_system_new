@@ -248,7 +248,7 @@ router.post(
 			class: courseClass,
 		} = req.body;
 		const file = req.file;
-
+		console.log(req.body);
 		if (!file) {
 			return res.status(400).json({ message: "CSV file is required" });
 		}
