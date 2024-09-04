@@ -147,7 +147,9 @@ const Attendance = () => {
 								label: `${i + 1}`,
 								value: i + 1,
 							}))}
-							className="w-full"
+							mode="tags"
+							allowClear
+							className="w-full hover:cursor-pointer"
 						/>
 					</Card>
 				</Col>
