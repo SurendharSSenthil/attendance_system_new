@@ -70,10 +70,6 @@ const App = () => {
 					element={<SignUp setAuth={setAuth} setUser={setUser} />}
 				/>
 				{/* Register Faculty Route */}
-				<Route
-					path="/register-faculty"
-					element={<RegisterFaculty setAuth={setAuth} user={user} />}
-				/>
 
 				{/* Main Application Routes */}
 				<Route
@@ -98,6 +94,16 @@ const App = () => {
 						}
 					/>
 
+					<Route
+						path="/register-faculty"
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<RegisterFaculty setAuth={setAuth} user={user} />
+							)
+						}
+					/>
 					{/* Dashboard Route */}
 					<Route
 						path="dashboard"

@@ -13,7 +13,7 @@ const RegisterFaculty = () => {
 	const [loading, setLoading] = useState(false);
 	const [fileList, setFileList] = useState([]);
 	const [currentStep, setCurrentStep] = useState(0);
-	const [formData, setFormData] = useState({}); // State to store all form data
+	const [formData, setFormData] = useState({});
 	const navigate = useNavigate();
 
 	const steps = [
@@ -176,7 +176,7 @@ const RegisterFaculty = () => {
 	};
 
 	return (
-		<div className="flex flex-col justify-center items-center min-h-screen bg-gray-100 p-4">
+		<div className="flex flex-col justify-center items-center m-4 bg-gray-100 p-4">
 			<div className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
 				<h2 className="text-slate-800 text-lg font-semibold text-center mb-4">
 					Register Course
