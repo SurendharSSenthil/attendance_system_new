@@ -9,115 +9,141 @@ const updateAttendance = async (req, res) => {
 		return res.status(400).json({ message: "All fields are required" });
 	}
 
+	console.log(coursecode, coursename, facname, date, hr, attendance);
+
 	try {
 		// Create or get the report collection based on course code
 		const ReportCollection = createReportCollection(coursecode);
 
 		// Find the existing report or create a new one
-		const report = await ReportCollection.findOne({ date, hr });
+		for (let hour of hr) {
+			const report = await ReportCollection.findOne({ date, hr: hour });
 
-		if (!report) {
-			// If report does not exist, create a new one
-			const newReport = new ReportCollection({
-				faculty: req.user.id,
-				coursename,
-				coursecode,
-				date,
-				hr,
-				freeze: true,
-				isExpired: false,
-				attendance,
-			});
+			if (!report) {
+				// If report does not exist, create a new one
+				const newReport = new ReportCollection({
+					faculty: req.user.id,
+					coursename,
+					coursecode,
+					date,
+					hr,
+					freeze: true,
+					isExpired: false,
+					attendance,
+				});
 
-			await newReport.save();
-			return res.status(201).json({
-				message: "Attendance created successfully",
-				report: newReport,
-			});
-		}
-		report.freeze = true;
-		// Update attendance records
-		for (const entry of attendance) {
-			const { RegNo, status } = entry;
-			const existingEntry = report.attendance.find(
-				(a) => a.RegNo.toString() === RegNo
-			);
-
-			if (existingEntry) {
-				existingEntry.status = status;
-				// existingEntry.freeze = freeze;
-			} else {
-				report.attendance.push({ RegNo, status });
+				await newReport.save();
+				return res.status(201).json({
+					message: "Attendance created successfully",
+					report: newReport,
+				});
 			}
+			report.freeze = true;
+			// Update attendance records
+			for (const entry of attendance) {
+				const { RegNo, status } = entry;
+				const existingEntry = report.attendance.find(
+					(a) => a.RegNo.toString() === RegNo
+				);
+
+				if (existingEntry) {
+					existingEntry.status = status;
+					// existingEntry.freeze = freeze;
+				} else {
+					report.attendance.push({ RegNo, status });
+				}
+			}
+
+			// Save the updated report document
+			await report.save();
 		}
 
-		// Save the updated report document
-		await report.save();
-
-		res
-			.status(200)
-			.json({ message: "Attendance updated successfully", report });
+		res.status(200).json({ message: "Attendance updated successfully" });
 	} catch (err) {
 		console.error("Error updating attendance:", err);
 		res.status(500).json({ message: "Internal Server Error" });
 	}
 };
 
-// initial data fetch for a date, for a course
+// initial data fetch for a date, for a course, for 1-8 number of hours..
 const fetchData = async (req, res) => {
 	const { date, coursecode, coursename, hr, yr, Class } = req.body;
-	const { id } = req.user;
+	const { id: facultyId } = req.user;
 	console.log(hr, yr, Class);
+
 	try {
-		const data = await classmodel.find({ coursecode, dept: yr, class: Class });
-		if (data.length <= 0) {
+		// Fetch class details based on course code, department, and class
+		const classDetails = await classmodel.find({
+			coursecode,
+			dept: yr,
+			class: Class,
+		});
+		if (classDetails.length <= 0) {
 			return res
 				.status(404)
-				.json({ message: "No students found! Please check the input fields" });
+				.json({ message: "No students found! Please check the input fields." });
 		}
-		// Fetch students data from the dynamically created collection
+
+		// Dynamically fetch the student collection based on course code
 		const StudentCollection = createStudentCollection(coursecode);
 		const students = await StudentCollection.find().sort({ RegNo: 1 });
-		const students_count = await StudentCollection.countDocuments();
+		const totalStudents = await StudentCollection.countDocuments();
 
-		// Fetch the attendance report for the specified course and date
+		// Fetch all the attendance reports for the specified hours at once
 		const ReportCollection = createReportCollection(coursecode);
-		let reports = await ReportCollection.findOne({ date, hr });
+		const existingReports = await ReportCollection.find({
+			date,
+			hr: { $in: hr.map((hour) => parseInt(hour)) },
+		});
 
-		if (!reports) {
-			// Create a new report document if not found
-			const attendance = students.map((student) => ({
-				RegNo: student.RegNo,
-				Name: student.StdName,
-				status: 1, // Assuming 1 means present
-				// freeze: false,
-			}));
-
-			reports = new ReportCollection({
-				faculty: id,
-				coursename,
-				coursecode,
-				date,
-				hr,
-				freeze: false,
-				isExpired: false,
-				attendance,
+		// Check if all the hours are already marked or none are marked
+		if (existingReports.length > 0 && existingReports.length !== hr.length) {
+			// If some but not all hours are marked, return an error response
+			return res.status(400).json({
+				message:
+					"The attendance cannot be marked! Some of the hours may already be taken!",
 			});
-
-			await reports.save();
 		}
 
-		// Prepare the attendance data and count absentees
-		let absenteeCount = 0;
-		let isExpired = reports.isExpired;
-		let freeze = reports.freeze;
+		let attendanceReport;
+		let isExpired = false;
+		let freeze = false;
 
+		// If no reports exist for these hours, create new ones
+		if (existingReports.length === 0) {
+			for (let hour of hr) {
+				const initialAttendance = students.map((student) => ({
+					RegNo: student.RegNo,
+					Name: student.StdName,
+					status: 1, // Assuming 1 means present
+				}));
+
+				attendanceReport = new ReportCollection({
+					faculty: facultyId,
+					coursename,
+					coursecode,
+					date,
+					hr: parseInt(hour),
+					freeze: false,
+					isExpired: false,
+					attendance: initialAttendance,
+				});
+
+				await attendanceReport.save();
+			}
+		} else {
+			attendanceReport = existingReports[0]; // Use the existing report for further calculations
+			isExpired = isExpired || attendanceReport?.isExpired;
+			freeze = freeze || attendanceReport?.freeze;
+		}
+
+		// Calculate attendance and absentees for the current hours
+		let absenteeCount = 0;
 		const attendanceData = students.map((student) => {
-			const attendance = reports.attendance.find(
+			const attendance = attendanceReport.attendance.find(
 				(a) => a.RegNo === student.RegNo
 			);
 
-			// Check if the student is absent (status = -1)
 			if (attendance && attendance.status === -1) {
 				absenteeCount++;
 			}
@@ -126,15 +152,12 @@ const fetchData = async (req, res) => {
 				RegNo: student.RegNo,
 				Name: student.StdName,
 				status: attendance ? attendance.status : 1,
-				// freeze: attendance ? attendance.freeze : false,
 			};
 		});
 
-		console.log("@fetchData", attendanceData);
-		console.log("data", data);
-		res.status(200).json({
+		return res.status(200).json({
 			reports: attendanceData,
-			count: students_count,
+			count: totalStudents,
 			absentees: absenteeCount,
 			isExpired,
 			freeze,

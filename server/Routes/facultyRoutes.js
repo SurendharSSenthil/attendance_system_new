@@ -134,7 +134,7 @@ router.post("/add-student", authenticateToken, async (req, res) => {
 
 router.delete("/delete-student", authenticateToken, async (req, res) => {
 	const { coursecode, RegNo } = req.body;
-
+	console.log(coursecode, RegNo);
 	try {
 		const StudentCollection = createStudentCollection(coursecode);
 		const reportCollection = createReportCollection(coursecode);

@@ -25,6 +25,9 @@ const EditData = ({ setAuth, user }) => {
 	const [count, setCount] = useState(0);
 	const [form] = Form.useForm();
 	const [form2] = Form.useForm();
+	const [del, setDel] = useState("");
+	const [modal3, setModal3] = useState(false);
+	// Fetch students when the component mounts
 
 	// Fetch courses when the component mounts
 	useEffect(() => {
@@ -78,7 +81,7 @@ const EditData = ({ setAuth, user }) => {
 	};
 
 	// Delete student
-	const deleteStudent = async (RegNo) => {
+	const deleteStudent = async () => {
 		try {
 			const response = await fetch(`${url}/students/delete-student`, {
 				method: "DELETE",
@@ -86,7 +89,7 @@ const EditData = ({ setAuth, user }) => {
 					"Content-Type": "application/json",
 					Authorization: `Bearer ${localStorage.getItem("token")}`,
 				},
-				body: JSON.stringify({ coursecode, RegNo }),
+				body: JSON.stringify({ coursecode, RegNo: del }),
 			});
 
 			if (!response.ok) {
@@ -94,6 +97,8 @@ const EditData = ({ setAuth, user }) => {
 			}
 
 			message.success("Student deleted successfully.");
+			setDel("");
+			setModal3(false);
 			fetchStudents();
 		} catch (error) {
 			console.error("Error deleting student:", error);
@@ -168,7 +173,14 @@ const EditData = ({ setAuth, user }) => {
 			title: "Remove Student",
 			key: "action",
 			render: (text, record) => (
-				<Button type="danger" onClick={() => deleteStudent(record.RegNo)}>
+				<Button
+					type="danger"
+					onClick={() => {
+						setModal3(true);
+						setDel(record.RegNo);
+						console.log(record.RegNo);
+					}}
+				>
 					<DeleteTwoTone />
 				</Button>
 			),
@@ -383,6 +395,26 @@ const EditData = ({ setAuth, user }) => {
 						</Button>
 					</Form.Item>
 				</Form>
+			</Modal>
+			<Modal
+				title="⚠️ Confirm Student Deletion"
+				open={modal3}
+				onOk={deleteStudent}
+				onCancel={() => setModal3(false)}
+				okText="Yes, Delete"
+				cancelText="Cancel"
+				centered
+				okButtonProps={{ danger: true }}
+			>
+				<div style={{ padding: "10px" }}>
+					<p>
+						This action is irreversible and will remove all records associated
+						with this student.
+					</p>
+					<p style={{ color: "red", fontWeight: "bold" }}>
+						Please proceed with caution!
+					</p>
+				</div>
 			</Modal>
 		</div>
 	);
