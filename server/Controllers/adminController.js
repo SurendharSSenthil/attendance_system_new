@@ -9,7 +9,8 @@ const register = async (req, res) => {
 	const username = data.username;
 	try {
 		const User = await admin.find(data);
-		if (User) {
+		if (User.length > 0) {
+			console.log(User);
 			return res.status(400).send({ message: "Username already exists!" });
 		}
 		// Create a new user
