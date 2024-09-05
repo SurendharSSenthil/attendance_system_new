@@ -64,8 +64,8 @@ const Attendance = () => {
 	};
 
 	const fetchAttendance = async () => {
-		if (!course || !Class || !yr || !currDate || !hr) {
-			message.error("Please select the fields.");
+		if (!course || !Class || !yr || !currDate || hr.length === 0) {
+			message.error("Please input all the fields.");
 			return;
 		}
 		setData([]);

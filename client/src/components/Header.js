@@ -35,7 +35,7 @@ const AppHeader = ({ setAuth, user }) => {
 					<button
 						type="button"
 						onClick={() => navigate("/register-faculty")}
-						className="relative py-0 px-4 h-10 rounded-lg transition-all duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50 focus:bg-white focus:text-blue-500 focus:border-blue-500 focus:shadow-md focus:shadow-blue-500/50 outline-none flex flex-row justify-center items-center font-semibold"
+						className="relative py-0 px-4 h-10 rounded-lg transition-all duration-300 bg-blue-500 text-white border-2 border-blue-500 hover:bg-white hover:text-blue-500 hover:border-blue-500 hover:shadow-md hover:shadow-blue-500/50 outline-none flex flex-row justify-center items-center font-semibold"
 					>
 						+ Course
 					</button>
