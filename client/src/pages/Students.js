@@ -260,7 +260,7 @@ const Students = () => {
 	}
 
 	return (
-		<div className="p-4 overflow-x-hidden">
+		<div className="overflow-x-hidden">
 			<p className="block text-lg text-gray-700 font-semibold">
 				<span className="text-red-500 font-bold">*</span>Select the date range
 				to get the summary of the students attendance report

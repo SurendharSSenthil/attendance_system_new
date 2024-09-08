@@ -10,6 +10,7 @@ import {
 	EditOutlined,
 	UnlockOutlined,
 	UserOutlined,
+	PlusOutlined,
 } from "@ant-design/icons";
 
 const { Sider } = Layout;
@@ -60,6 +61,12 @@ const Sidebar = ({ user }) => {
 				icon: <UnlockOutlined />,
 				label: "Unlock Attendance",
 				path: "/unlock-attendance",
+			},
+			{
+				key: "7",
+				icon: <PlusOutlined />,
+				label: "Add Course",
+				path: "/register-faculty",
 			}
 		);
 	}
