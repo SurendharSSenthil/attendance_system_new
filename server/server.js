@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const colors = require("colors");
 const connectDB = require("./Config/db");
 const facultyRoutes = require("./Routes/facultyRoutes");
 const attendanceRoutes = require("./Routes/attendanceRoutes");
@@ -25,13 +26,29 @@ app.use((req, res, next) => {
 		timeZone: "Asia/Kolkata",
 	});
 	const clientIp = req.headers["x-forwarded-for"] || req.ip;
+	const method = req.method;
+
+	const methodColors = {
+		GET: colors.green,
+		POST: colors.blue,
+		PUT: colors.yellow,
+		DELETE: colors.red,
+		OPTIONS: colors.cyan,
+		PATCH: colors.magenta,
+	};
+
+	const colorize = methodColors[method] || colors.white;
 
 	console.log(
-		`Request Method: ${req.method}, Request Path: ${req.path}, Request Time: ${currentDateTime}, Request IP: ${clientIp}`
+		colorize(
+			`Request Method: ${method}, Request Path: ${
+				req.path
+			}, Request Time: ${currentDateTime}, Request IP: ${req.get("host")}`
+		)
 	);
+
 	next();
 });
-
 cron.schedule("0 0 * * *", async () => {
 	try {
 		const now = new Date();

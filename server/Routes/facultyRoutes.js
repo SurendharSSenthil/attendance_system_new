@@ -8,6 +8,7 @@ const authenticateToken = require("../Middleware/middleware");
 const createStudentCollection = require("../Models/studentModel");
 const Class = require("../Models/courseModel");
 const createReportCollection = require("../Models/reportModel");
+const timeTableCollection = require("../Models/timetableModel");
 const router = express.Router();
 const upload = multer({ dest: "uploads/" });
 
@@ -313,5 +314,19 @@ router.post(
 		}
 	}
 );
+
+router.post("/add-time-table", authenticateToken, async (req, res) => {
+	const data = req.body;
+	console.log(req.user, req.body, data);
+	try {
+		Object.entries(data).forEach(([key, value]) => {
+			console.log(`${key}: ${value}`);
+		});
+		res.status(200).send({ message: "success" });
+	} catch (err) {
+		console.error("Error occurred:", err);
+		res.status(500).json({ message: "Internal Server Error" });
+	}
+});
 
 module.exports = router;
