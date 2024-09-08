@@ -13,7 +13,7 @@ const AppHeader = ({ setAuth, user }) => {
 		localStorage.removeItem("token");
 		localStorage.removeItem("user");
 		setAuth(false);
-		navigate("/login"); // Redirect to login page after logout
+		navigate("/auth");
 	};
 
 	const menu = (
