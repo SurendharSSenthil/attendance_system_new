@@ -54,6 +54,7 @@ cron.schedule("0 0 * * *", async () => {
 			await ReportCollection.updateMany(
 				{
 					created_at: { $lte: new Date(now - 7 * 24 * 60 * 60 * 1000) },
+					freeze: true,
 					isExpired: false,
 				},
 				{
