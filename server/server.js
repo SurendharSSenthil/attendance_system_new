@@ -66,7 +66,7 @@ cron.schedule("0 0 * * *", async () => {
 			const ReportCollection = createReportCollection(
 				collectionName.replace("reports_", "")
 			);
-			console.log(reportCollections);
+			console.log("cron called!!!", reportCollections);
 			// Update reports where the creation date is more than 7 days ago
 			await ReportCollection.updateMany(
 				{
