@@ -16,6 +16,7 @@ import EditData from "./pages/EditData";
 import UnlockAttendance from "./pages/UnlockAttendance";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import TimeTableVerify from "./pages/TimeTableVerify";
 
 const App = () => {
 	const [auth, setAuth] = useState(false);
@@ -148,6 +149,16 @@ const App = () => {
 								<Navigate to="/404" />
 							) : (
 								<EditData setAuth={setAuth} user={user} />
+							)
+						}
+					/>
+					<Route
+						path="time-table"
+						element={
+							user.role === "U" ? (
+								<Navigate to="/404" />
+							) : (
+								<TimeTableVerify setAuth={setAuth} user={user} />
 							)
 						}
 					/>

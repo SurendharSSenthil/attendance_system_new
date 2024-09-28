@@ -69,7 +69,7 @@ cron.schedule('0 0 * * *', async () => {
 			// Update reports where the creation date is more than 7 days ago
 			const res = await ReportCollection.updateMany(
 				{
-					created_at: { $lte: new Date(now - 7 * 24 * 60 * 60 * 1000) },
+					createdAt: { $lte: new Date(now - 7 * 24 * 60 * 60 * 1000) },
 					freeze: true,
 					isExpired: false,
 				},

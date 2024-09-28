@@ -1,12 +1,13 @@
-const createReportCollection = require("../Models/reportModel");
-const createStudentCollection = require("../Models/studentModel");
-const classmodel = require("../Models/courseModel");
+const createReportCollection = require('../Models/reportModel');
+const createStudentCollection = require('../Models/studentModel');
+const classmodel = require('../Models/courseModel');
+const TimetableModel = require('../Models/timetableModel');
 
 const updateAttendance = async (req, res) => {
 	const { coursecode, coursename, facname, date, hr, attendance } = req.body;
 
 	if (!coursecode || !coursename || !date || !hr || !attendance) {
-		return res.status(400).json({ message: "All fields are required" });
+		return res.status(400).json({ message: 'All fields are required' });
 	}
 
 	console.log(coursecode, coursename, facname, date, hr, attendance);
@@ -34,7 +35,7 @@ const updateAttendance = async (req, res) => {
 
 				await newReport.save();
 				return res.status(201).json({
-					message: "Attendance created successfully",
+					message: 'Attendance created successfully',
 					report: newReport,
 				});
 			}
@@ -58,10 +59,10 @@ const updateAttendance = async (req, res) => {
 			await report.save();
 		}
 
-		res.status(200).json({ message: "Attendance updated successfully" });
+		res.status(200).json({ message: 'Attendance updated successfully' });
 	} catch (err) {
-		console.error("Error updating attendance:", err);
-		res.status(500).json({ message: "Internal Server Error" });
+		console.error('Error updating attendance:', err);
+		res.status(500).json({ message: 'Internal Server Error' });
 	}
 };
 
@@ -81,7 +82,7 @@ const fetchData = async (req, res) => {
 		if (classDetails.length <= 0) {
 			return res
 				.status(404)
-				.json({ message: "No students found! Please check the input fields." });
+				.json({ message: 'No students found! Please check the input fields.' });
 		}
 
 		// Dynamically fetch the student collection based on course code
@@ -101,7 +102,7 @@ const fetchData = async (req, res) => {
 			// If some but not all hours are marked, return an error response
 			return res.status(400).json({
 				message:
-					"The attendance cannot be marked! Some of the hours may already be taken!",
+					'The attendance cannot be marked! Some of the hours may already be taken!',
 			});
 		}
 
@@ -163,25 +164,32 @@ const fetchData = async (req, res) => {
 			freeze,
 		});
 	} catch (error) {
-		console.error("Error fetching attendance data:", error);
-		res.status(500).json({ message: "Failed to fetch attendance data." });
+		console.error('Error fetching attendance data:', error);
+		res.status(500).json({ message: 'Failed to fetch attendance data.' });
 	}
 };
 
 const studentDashboard = async (req, res) => {
 	try {
 		const { startDate, endDate, coursecode, yr, Class } = req.body;
-		console.log("@studentDashboard", startDate, endDate, coursecode, yr, Class);
 
 		if (!coursecode) {
-			return res.status(400).json({ error: "Course code is required" });
+			return res.status(400).json({ error: 'Course code is required' });
 		}
 
 		const data = await classmodel.find({ coursecode, dept: yr, class: Class });
-		if (data.length <= 0) {
+		console.log(data, data.length);
+		if (data.length == 0) {
 			return res
 				.status(404)
-				.json({ message: "No students found! Please check the input fields" });
+				.json({ message: 'No students found! Please check the input fields' });
+		}
+		const timetable = await TimetableModel.findOne({ coursecode });
+
+		if (!timetable) {
+			return res
+				.status(404)
+				.json({ message: 'No timetable found for the course' });
 		}
 
 		const ReportCollection = createReportCollection(coursecode);
@@ -190,68 +198,152 @@ const studentDashboard = async (req, res) => {
 			{
 				$match: {
 					date: {
-						$gte: startDate ? new Date(startDate) : new Date("1970-01-01"),
-						$lte: endDate ? new Date(endDate) : new Date(), // Current date if endDate is not provided
+						$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
+						$lte: endDate ? new Date(endDate) : new Date(),
 					},
 				},
 			},
-			{
-				$unwind: "$attendance",
-			},
-			{
-				$match: {
-					freeze: { $eq: true },
-				},
-			},
+			{ $unwind: '$attendance' },
+			{ $match: { freeze: { $eq: true } } },
 			{
 				$group: {
 					_id: {
-						RegNo: "$attendance.RegNo",
-						Name: "$attendance.Name",
-						course: "$coursecode",
+						RegNo: '$attendance.RegNo',
+						Name: '$attendance.Name',
+						course: '$coursecode',
 					},
 					present: {
 						$sum: {
-							$cond: [
-								{ $in: ["$attendance.status", [1, 2]] },
-								1, // If true, add 1 to present count
-								0, // If false, add 0 to present count
-							],
+							$cond: [{ $in: ['$attendance.status', [1, 2]] }, 1, 0],
 						},
 					},
-					totalHours: {
-						$sum: 1,
-					},
+					totalHours: { $sum: 1 },
 					statuses: {
 						$push: {
-							date: "$date",
-							hour: "$hr",
-							status: "$attendance.status",
+							date: '$date',
+							hour: '$hr',
+							status: '$attendance.status',
 						},
 					},
 				},
 			},
-			// Add a sort stage within the grouping to sort statuses by date and hour
 			{
 				$addFields: {
 					statuses: {
-						$sortArray: {
-							input: "$statuses",
-							sortBy: { date: 1, hour: 1 },
+						$map: {
+							input: '$statuses',
+							as: 'statusEntry',
+							in: {
+								date: '$$statusEntry.date',
+								hour: '$$statusEntry.hour',
+								status: '$$statusEntry.status',
+								valid: {
+									$let: {
+										vars: {
+											dayOfWeek: { $dayOfWeek: '$$statusEntry.date' },
+											timetableHours: {
+												$switch: {
+													branches: [
+														{
+															case: {
+																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2],
+															},
+															then: {
+																$ifNull: [timetable.timetable.monday, []],
+															},
+														},
+														{
+															case: {
+																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3],
+															},
+															then: {
+																$ifNull: [timetable.timetable.tuesday, []],
+															},
+														},
+														{
+															case: {
+																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4],
+															},
+															then: {
+																$ifNull: [timetable.timetable.wednesday, []],
+															},
+														},
+														{
+															case: {
+																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5],
+															},
+															then: {
+																$ifNull: [timetable.timetable.thursday, []],
+															},
+														},
+														{
+															case: {
+																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6],
+															},
+															then: {
+																$ifNull: [timetable.timetable.friday, []],
+															},
+														},
+													],
+													default: [],
+												},
+											},
+										},
+										in: {
+											$cond: [
+												{ $in: ['$$statusEntry.hour', '$$timetableHours'] },
+												true,
+												false,
+											],
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			{
+				$addFields: {
+					validHours: {
+						$size: {
+							$filter: {
+								input: '$statuses',
+								as: 'statusEntry',
+								cond: {
+									$eq: ['$$statusEntry.valid', true],
+								},
+							},
+						},
+					},
+					validPresent: {
+						$size: {
+							$filter: {
+								input: '$statuses',
+								as: 'statusEntry',
+								cond: {
+									$and: [
+										{ $eq: ['$$statusEntry.valid', true] }, // Valid is true
+										{ $in: ['$$statusEntry.status', [1, 2]] }, // Status is present
+									],
+								},
+							},
 						},
 					},
 				},
 			},
 			{
 				$group: {
-					_id: "$_id.RegNo",
-					Name: { $first: "$_id.Name" },
+					_id: '$_id.RegNo',
+					Name: { $first: '$_id.Name' },
 					courses: {
 						$push: {
-							course: "$_id.course",
-							present: "$present",
-							totalHours: "$totalHours",
-							statuses: "$statuses",
+							course: '$_id.course',
+							present: '$present',
+							totalHours: '$totalHours',
+							validHours: '$validHours',
+							validPresent: '$validPresent',
+							statuses: '$statuses',
 						},
 					},
 				},
@@ -259,14 +351,14 @@ const studentDashboard = async (req, res) => {
 			{
 				$project: {
 					_id: 0,
-					RegNo: "$_id",
-					name: "$Name",
+					RegNo: '$_id',
+					name: '$Name',
 					courses: 1,
 				},
 			},
 			{
 				$sort: {
-					RegNo: 1, // Sort by RegNo
+					RegNo: 1,
 				},
 			},
 		]);
@@ -274,8 +366,8 @@ const studentDashboard = async (req, res) => {
 		console.log(result);
 		res.status(200).json(result);
 	} catch (err) {
-		console.error("Error fetching student dashboard data:", err);
-		res.status(500).json({ error: "Internal Server Error" });
+		console.error('Error fetching student dashboard data:', err);
+		res.status(500).json({ error: 'Internal Server Error' });
 	}
 };
 
@@ -293,26 +385,26 @@ const FinalStudentData = async (req, res) => {
 						$gte: new Date(startDate),
 						$lte: new Date(endDate),
 					},
-					"attendance.RegNo": RegNo,
+					'attendance.RegNo': RegNo,
 					freeze: true,
 				},
 			},
 			{
-				$unwind: "$attendance",
+				$unwind: '$attendance',
 			},
 			{
 				$match: {
-					"attendance.RegNo": RegNo,
+					'attendance.RegNo': RegNo,
 				},
 			},
 			{
 				$group: {
-					_id: "$attendance.RegNo",
-					name: { $first: "$attendance.Name" },
+					_id: '$attendance.RegNo',
+					name: { $first: '$attendance.Name' },
 					present: {
 						$sum: {
 							$cond: [
-								{ $in: ["$attendance.status", [1, 2]] },
+								{ $in: ['$attendance.status', [1, 2]] },
 								1, // If status is 1 or 2, add 1 to present count
 								0, // If not, add 0
 							],
@@ -326,7 +418,7 @@ const FinalStudentData = async (req, res) => {
 			{
 				$project: {
 					_id: 0,
-					RegNo: "$_id",
+					RegNo: '$_id',
 					name: 1,
 					present: 1,
 					totalHours: 1,
@@ -334,9 +426,9 @@ const FinalStudentData = async (req, res) => {
 			},
 		]);
 
-		console.log("@finalstudentdata:", result);
+		console.log('@finalstudentdata:', result);
 		if (result.length === 0) {
-			return res.status(404).json({ message: "No student found." });
+			return res.status(404).json({ message: 'No student found.' });
 		}
 		return res.status(200).send(result);
 	} catch (err) {
@@ -354,7 +446,7 @@ const deleteRecord = async (req, res) => {
 		console.log(record);
 		return res
 			.status(200)
-			.send({ message: "Attendance record deleted successfully." });
+			.send({ message: 'Attendance record deleted successfully.' });
 	} catch (err) {
 		console.error(err);
 		return res.status(500).send({ error: err.message });

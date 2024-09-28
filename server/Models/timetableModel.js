@@ -1,6 +1,6 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const timetableSchema = new mongoose.Schema(
+const TimetableSchema = new mongoose.Schema(
 	{
 		coursename: {
 			type: String,
@@ -9,10 +9,22 @@ const timetableSchema = new mongoose.Schema(
 		coursecode: {
 			type: String,
 			required: true,
+			unique: true,
+		},
+		dept: {
+			type: String,
+			required: true,
+		},
+		yr: {
+			type: Number,
+			required: true,
 		},
 		timetable: {
-			type: Object,
-			required: true,
+			monday: { type: [Number], default: [] },
+			tuesday: { type: [Number], default: [] },
+			wednesday: { type: [Number], default: [] },
+			thursday: { type: [Number], default: [] },
+			friday: { type: [Number], default: [] },
 		},
 	},
 	{
@@ -20,4 +32,5 @@ const timetableSchema = new mongoose.Schema(
 	}
 );
 
-module.exports = admin = mongoose.model("timetable", timetableSchema);
+const TimetableModel = mongoose.model('Timetable', TimetableSchema);
+module.exports = TimetableModel;

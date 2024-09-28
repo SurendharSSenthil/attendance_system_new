@@ -67,6 +67,13 @@ const Sidebar = ({ user }) => {
 				icon: <PlusOutlined />,
 				label: "Add Course",
 				path: "/register-faculty",
+			},
+
+			{
+				key: "8",
+				icon: <PlusOutlined />,
+				label: "Time Table",
+				path: "/time-table",
 			}
 		);
 	}

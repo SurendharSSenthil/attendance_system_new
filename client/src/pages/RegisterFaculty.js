@@ -177,6 +177,11 @@ const RegisterFaculty = () => {
 
 	return (
 		<div className="flex flex-col justify-center items-center m-4 bg-gray-100 p-4">
+			<p className="block text-lg text-gray-700 font-semibold">
+				<span className="text-red-500 font-bold text-left">*</span>Register
+				Course
+			</p>
+			<br />
 			<div className="w-full max-w-lg bg-white shadow-lg rounded-lg p-6">
 				<h2 className="text-slate-800 text-lg font-semibold text-center mb-4">
 					Register Course
