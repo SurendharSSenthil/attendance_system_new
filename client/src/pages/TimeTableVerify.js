@@ -304,7 +304,7 @@ const TimeTableVerify = () => {
 
 			{loading ? (
 				<Spin />
-			) : coursename && coursecode && yr && dept ? (
+			) : (
 				<div>
 					<Form form={form} onFinish={onFinish}>
 						<Table
@@ -324,8 +324,6 @@ const TimeTableVerify = () => {
 						</Row>
 					</Form>
 				</div>
-			) : (
-				<div></div>
 			)}
 		</div>
 	);
