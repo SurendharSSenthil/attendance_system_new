@@ -186,7 +186,7 @@ const Students = () => {
 						{`${dayOfWeek} ${moment(status.date).format('YYYY-MM-DD')} Hour ${
 							status.hour
 						}`}
-						<span>{!status.valid ? 'extra' : ''}</span>
+						<span>{!status.valid ? '(extra hour)' : ''}</span>
 					</p>
 				),
 				key: `hour_${index + 1}`,
