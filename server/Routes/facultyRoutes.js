@@ -385,4 +385,86 @@ router.post('/add-time-table', authenticateToken, async (req, res) => {
 	}
 });
 
+router.post('/edit-student', authenticateToken, async (req, res) => {
+	const { oldname, newname, oldreg, newreg, coursecode } = req.body;
+
+	// Check if coursecode is provided
+	if (!coursecode) {
+		return res.status(400).json({ message: 'Course code is required!' });
+	}
+
+	// Check if there's at least one pair of values for updating
+	if (!oldname && !newname && !oldreg && !newreg) {
+		return res.status(400).json({ message: 'No fields to update!' });
+	}
+
+	try {
+		const students = createStudentCollection(coursecode);
+		const reports = createReportCollection(coursecode);
+
+		// Build update filter and update object dynamically
+		const filter = {};
+		const update = {};
+
+		// Filter criteria - old values
+		if (oldname) filter.StdName = oldname;
+		if (oldreg) filter.RegNo = oldreg;
+
+		// Update data - new values
+		if (newname) update.StdName = newname;
+		if (newreg) update.RegNo = newreg;
+
+		// Ensure there's something to update
+		if (Object.keys(filter).length === 0 || Object.keys(update).length === 0) {
+			return res.status(400).json({ message: 'Invalid update data!' });
+		}
+
+		// Perform update operation in the students collection
+		const studentUpdateResult = await students.findOneAndUpdate(filter, {
+			$set: update,
+		});
+
+		if (!studentUpdateResult) {
+			return res.status(404).json({ message: 'Student not found!' });
+		}
+
+		// Build filter and update for reports collection
+		const attendanceFilter = {};
+		const attendanceUpdate = {};
+
+		if (oldname) attendanceFilter['attendance.Name'] = oldname;
+		if (oldreg) attendanceFilter['attendance.RegNo'] = oldreg;
+
+		// Update the attendance array in all related documents
+		if (newname) attendanceUpdate['attendance.$[elem].Name'] = newname;
+		if (newreg) attendanceUpdate['attendance.$[elem].RegNo'] = newreg;
+
+		// Perform update operation in the reports collection
+		const reportUpdateResult = await reports.updateMany(
+			attendanceFilter,
+			{ $set: attendanceUpdate },
+			{
+				arrayFilters: [
+					{
+						$or: [
+							{ 'elem.Name': oldname || null },
+							{ 'elem.RegNo': oldreg || null },
+						],
+					},
+				],
+			}
+		);
+
+		// Response to client
+		return res.status(200).json({
+			message: 'Student and attendance updated successfully',
+			studentUpdate: studentUpdateResult,
+			attendanceUpdate: reportUpdateResult.modifiedCount,
+		});
+	} catch (err) {
+		console.error('Error @edit-student', err);
+		return res.status(500).json({ message: 'Internal Server Error' });
+	}
+});
+
 module.exports = router;
