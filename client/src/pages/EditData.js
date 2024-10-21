@@ -83,6 +83,33 @@ const EditData = ({ setAuth, user }) => {
 			message.error('Failed to add admin. Please check the details.');
 		}
 	};
+	const onFinishStudent = async (values) => {
+		try {
+			const response = await fetch(`${url}/students/add-student`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${localStorage.getItem('token')}`,
+				},
+				body: JSON.stringify({ ...values, coursecode: addcourse }),
+			});
+
+			if (!response.ok) {
+				throw new Error(`Error: ${response.status}`);
+			}
+
+			const result = await response.json();
+			message.success(result.message);
+
+			form2.resetFields();
+			fetchStudents();
+		} catch (err) {
+			console.error('Error adding student:', err);
+			message.error('Failed to add student. Please check the details.');
+		} finally {
+			showModal(false);
+		}
+	};
 
 	// Delete student
 	const deleteStudent = async () => {
@@ -367,6 +394,71 @@ const EditData = ({ setAuth, user }) => {
 					<Form.Item>
 						<Button type='primary' htmlType='submit' className='w-full'>
 							Add Representative
+						</Button>
+					</Form.Item>
+				</Form>
+			</Modal>
+			<Modal
+				title='Add Student'
+				open={modal}
+				onCancel={() => showModal(false)}
+				footer={null}
+			>
+				<Form
+					form={form}
+					name='add_student'
+					onFinish={onFinishStudent}
+					autoComplete='off'
+				>
+					<Form.Item
+						label='Student Name'
+						name='StdName'
+						rules={[
+							{
+								required: true,
+								message: 'Please input the Student name!',
+							},
+						]}
+					>
+						<Input />
+					</Form.Item>
+
+					<Form.Item
+						label='Roll Number'
+						name='RegNo'
+						rules={[
+							{
+								required: true,
+								message: 'Please input the reg no!',
+							},
+						]}
+					>
+						<Input />
+					</Form.Item>
+					<Form.Item
+						label='Course'
+						name='coursecode'
+						rules={[
+							{
+								required: true,
+								message: 'Please select the course!',
+							},
+						]}
+					>
+						<Select
+							onChange={(v) => setAddCourse(v)}
+							value={addcourse}
+							options={courses.map((course) => ({
+								label: `${course.coursename} - ${course.coursecode}`,
+								value: course.coursecode,
+							}))}
+							className='w-full'
+						/>
+					</Form.Item>
+
+					<Form.Item>
+						<Button type='primary' htmlType='submit' className='w-full'>
+							Add Student
 						</Button>
 					</Form.Item>
 				</Form>

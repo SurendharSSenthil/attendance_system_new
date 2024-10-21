@@ -11,6 +11,7 @@ import {
 	Button,
 	InputNumber,
 	message,
+	Alert,
 } from 'antd';
 
 import moment from 'moment';
@@ -305,6 +306,11 @@ const Students = () => {
 				<span className='text-red-500 font-bold'>*</span>Select the date range
 				to get the summary of the students attendance report
 			</p>
+			<br />
+			<Alert
+				type='info'
+				message='Please select the student count range for laboratory'
+			/>
 			<br />
 			<Row gutter={[16, 16]}>
 				<Col xs={24} sm={12} md={8}>

@@ -118,7 +118,7 @@ router.post('/add-student', authenticateToken, async (req, res) => {
 
 		const savedStudent = await newStudent.save();
 
-		const newClassList = await Class.UpdateOne(
+		const newClassList = await Class.updateOne(
 			{ coursecode: coursecode },
 			{ $push: { students: RegNo } }
 		);
