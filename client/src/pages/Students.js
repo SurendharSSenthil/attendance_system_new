@@ -1,18 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
+	Row,
+	Col,
+	Card,
+	Select,
 	DatePicker,
-	Button,
-	Spin,
-	Alert,
 	Table,
 	Input,
-	Form,
+	Spin,
+	Button,
+	InputNumber,
 	message,
-	Col,
-	Select,
-	Card,
-	Row,
 } from 'antd';
+
 import moment from 'moment';
 import { url } from '../Backendurl';
 import { saveAs } from 'file-saver';
@@ -31,6 +31,9 @@ const Students = () => {
 	const [yr, setYr] = useState();
 	const [Class, setClass] = useState('');
 	const [course, setCourse] = useState('');
+	const [startRange, setStartRange] = useState();
+	const [endRange, setEndRange] = useState();
+
 	const { RangePicker } = DatePicker;
 	const fetchStudentData = async () => {
 		if (!course || !yr || !Class || !startDate || !endDate) {
@@ -38,6 +41,7 @@ const Students = () => {
 			setData([]);
 			return;
 		}
+
 		setLoading(true);
 		setData([]);
 		try {
@@ -53,6 +57,8 @@ const Students = () => {
 					coursecode: course,
 					yr,
 					Class,
+					startRange,
+					endRange,
 				}),
 			});
 			if (!response.ok) {
@@ -304,7 +310,7 @@ const Students = () => {
 				<Col xs={24} sm={12} md={8}>
 					<Card>
 						<p className='text-gray-500 mb-2'>
-							<span className='text-red-500'>* </span>Select the Course
+							<span className='text-red-500'>* </span>Select the Date Range
 						</p>
 						<RangePicker onChange={(e) => handleDateChange(e)} />
 					</Card>
@@ -360,7 +366,31 @@ const Students = () => {
 						/>
 					</Card>
 				</Col>
+
+				{/* New Range Selection for Students */}
+				<Col xs={24} sm={12} md={8}>
+					<Card>
+						<p className='text-gray-500 mb-2'>Select Roll Number Range</p>
+						<div className='flex gap-4'>
+							<InputNumber
+								min={1}
+								max={1000}
+								placeholder='Start'
+								onChange={(value) => setStartRange(value)}
+								className='w-1/2'
+							/>
+							<InputNumber
+								min={1}
+								max={1000}
+								placeholder='End'
+								onChange={(value) => setEndRange(value)}
+								className='w-1/2'
+							/>
+						</div>
+					</Card>
+				</Col>
 			</Row>
+
 			<Row gutter={[16, 16]} className='mt-4'>
 				<Col xs={24} sm={12} md={8}>
 					<button

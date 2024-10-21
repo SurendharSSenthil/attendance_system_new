@@ -118,11 +118,16 @@ router.post('/add-student', authenticateToken, async (req, res) => {
 
 		const savedStudent = await newStudent.save();
 
+		const newClassList = await Class.UpdateOne(
+			{ coursecode: coursecode },
+			{ $push: { students: RegNo } }
+		);
 		const newReport = await reportModel.updateMany(
 			{},
 			{ $push: { attendance: { RegNo, Name: StdName, status: -1 } } }
 		);
 		console.log('Added Student to all reports:', newReport);
+		console.log('Added Student to course:', newClassList);
 		console.log('Added Student to the student collection:', savedStudent);
 		return res
 			.status(200)
@@ -149,8 +154,13 @@ router.delete('/delete-student', authenticateToken, async (req, res) => {
 			{},
 			{ $pull: { attendance: { RegNo } } }
 		);
+		const classUpdateResult = await Class.updateOne(
+			{ coursecode: coursecode },
+			{ $pull: { students: RegNo } }
+		);
 		console.log('Deleted from reports:', result);
 		console.log('Deleted Student:', student);
+		console.log('Deleted Student list:', classUpdateResult);
 		return res
 			.status(200)
 			.json({ message: 'Student deleted successfully', student });

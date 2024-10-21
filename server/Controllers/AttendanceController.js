@@ -171,21 +171,50 @@ const fetchData = async (req, res) => {
 
 const studentDashboard = async (req, res) => {
 	try {
-		const { startDate, endDate, coursecode, yr, Class } = req.body;
-
+		const { startDate, endDate, coursecode, yr, Class, startRange, endRange } =
+			req.body;
 		if (!coursecode) {
 			return res.status(400).json({ error: 'Course code is required' });
 		}
-
-		const data = await classmodel.find({ coursecode, dept: yr, class: Class });
-		console.log(data, data.length);
-		if (data.length == 0) {
+		console.log(
+			startDate,
+			endDate,
+			coursecode,
+			yr,
+			Class,
+			startRange,
+			endRange
+		);
+		// Find class document based on coursecode, year, and class
+		const data = await classmodel.findOne({
+			coursecode,
+			dept: yr,
+			class: Class,
+		});
+		if (!data) {
 			return res
 				.status(404)
 				.json({ message: 'No students found! Please check the input fields' });
 		}
-		const timetable = await TimetableModel.findOne({ coursecode });
 
+		// Ensure startRange and endRange are within the valid bounds of the students array
+		const totalStudents = data.students.length;
+		console.log('totalStudents', totalStudents);
+
+		// Select students based on startRange and endRange (1-based index, so we adjust by -1)
+		const selectedStudents = data.students.slice(
+			startRange ? startRange - 1 : 0,
+			endRange ? endRange : totalStudents
+		);
+		console.log('Selected Students', selectedStudents);
+		if (selectedStudents.length === 0) {
+			return res
+				.status(404)
+				.json({ message: 'No students found in the specified range' });
+		}
+
+		// Find the timetable for the course
+		const timetable = await TimetableModel.findOne({ coursecode });
 		if (!timetable) {
 			return res
 				.status(404)
@@ -194,6 +223,7 @@ const studentDashboard = async (req, res) => {
 
 		const ReportCollection = createReportCollection(coursecode);
 
+		// Query the reports for the selected students
 		const result = await ReportCollection.aggregate([
 			{
 				$match: {
@@ -201,10 +231,16 @@ const studentDashboard = async (req, res) => {
 						$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
 						$lte: endDate ? new Date(endDate) : new Date(),
 					},
+					'attendance.RegNo': { $in: selectedStudents }, // Match only selected students
 				},
 			},
 			{ $unwind: '$attendance' },
-			{ $match: { freeze: { $eq: true } } },
+			{
+				$match: {
+					freeze: { $eq: true },
+					'attendance.RegNo': { $in: selectedStudents },
+				},
+			},
 			{
 				$group: {
 					_id: {
@@ -363,7 +399,7 @@ const studentDashboard = async (req, res) => {
 			},
 		]);
 
-		console.log(result);
+		console.log(result, result.length);
 		res.status(200).json(result);
 	} catch (err) {
 		console.error('Error fetching student dashboard data:', err);
