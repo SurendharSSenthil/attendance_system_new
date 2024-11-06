@@ -144,7 +144,7 @@ const Students = () => {
 		];
 
 		const rows = data.map((student) => [
-			student.RegNo,
+			`'${student.RegNo}'`,  
 			student.name,
 			...student.courses[0].statuses.map((status, index) => {
 				const statusValue = student.courses[0].statuses[index].status;
@@ -162,12 +162,14 @@ const Students = () => {
 				Math.round((course.present * 100) / course.totalHours)
 			),
 		]);
-
+		
 		const csvContent = [header, ...rows].map((e) => e.join(',')).join('\n');
-
+		
 		const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
 		saveAs(blob, 'students_attendance.csv');
-	};
+		};
+			
+		
 
 	const columns = [
 		{
@@ -295,6 +297,19 @@ const Students = () => {
 						(c) => c.course === course.course
 					);
 					return <span>{courseData ? courseData.validPresent : 0}</span>;
+				},
+			});
+		});
+		data[0].courses.forEach((course) => {
+			columns.push({
+				title: 'No of OD availed',
+				dataIndex: course.OD,
+				key: `OD_${course.OD}`,
+				render: (_, record) => {
+					const courseData = record.courses.find(
+						(c) => c.course === course.course
+					);
+					return <span>{courseData ? courseData.OD : 0}</span>;
 				},
 			});
 		});

@@ -2,6 +2,7 @@ const createReportCollection = require('../Models/reportModel');
 const createStudentCollection = require('../Models/studentModel');
 const classmodel = require('../Models/courseModel');
 const TimetableModel = require('../Models/timetableModel');
+const moment = require('moment');
 
 const updateAttendance = async (req, res) => {
 	const { coursecode, coursename, facname, date, hr, attendance } = req.body;
@@ -171,59 +172,43 @@ const fetchData = async (req, res) => {
 
 const studentDashboard = async (req, res) => {
 	try {
-		const { startDate, endDate, coursecode, yr, Class, startRange, endRange } =
-			req.body;
+		const { startDate, endDate, coursecode, yr, Class, startRange, endRange } = req.body;
+
 		if (!coursecode) {
 			return res.status(400).json({ error: 'Course code is required' });
 		}
-		console.log(
-			startDate,
-			endDate,
-			coursecode,
-			yr,
-			Class,
-			startRange,
-			endRange
-		);
-		// Find class document based on coursecode, year, and class
+
+		// Fetch class data based on coursecode, year, and class
 		const data = await classmodel.findOne({
 			coursecode,
 			dept: yr,
 			class: Class,
 		});
 		if (!data) {
-			return res
-				.status(404)
-				.json({ message: 'No students found! Please check the input fields' });
+			return res.status(404).json({ message: 'No students found! Please check the input fields' });
 		}
 
-		// Ensure startRange and endRange are within the valid bounds of the students array
 		const totalStudents = data.students.length;
-		console.log('totalStudents', totalStudents);
 
-		// Select students based on startRange and endRange (1-based index, so we adjust by -1)
+		// Select students based on startRange and endRange
 		const selectedStudents = data.students.slice(
 			startRange ? startRange - 1 : 0,
 			endRange ? endRange : totalStudents
 		);
-		console.log('Selected Students', selectedStudents);
+
 		if (selectedStudents.length === 0) {
-			return res
-				.status(404)
-				.json({ message: 'No students found in the specified range' });
+			return res.status(404).json({ message: 'No students found in the specified range' });
 		}
 
 		// Find the timetable for the course
 		const timetable = await TimetableModel.findOne({ coursecode });
 		if (!timetable) {
-			return res
-				.status(404)
-				.json({ message: 'No timetable found for the course' });
+			return res.status(404).json({ message: 'No timetable found for the course' });
 		}
 
 		const ReportCollection = createReportCollection(coursecode);
 
-		// Query the reports for the selected students
+		// Aggregate data for student attendance and OD count
 		const result = await ReportCollection.aggregate([
 			{
 				$match: {
@@ -231,7 +216,7 @@ const studentDashboard = async (req, res) => {
 						$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
 						$lte: endDate ? new Date(endDate) : new Date(),
 					},
-					'attendance.RegNo': { $in: selectedStudents }, // Match only selected students
+					'attendance.RegNo': { $in: selectedStudents },
 				},
 			},
 			{ $unwind: '$attendance' },
@@ -252,6 +237,9 @@ const studentDashboard = async (req, res) => {
 						$sum: {
 							$cond: [{ $in: ['$attendance.status', [1, 2]] }, 1, 0],
 						},
+					},
+					OD: {
+						$sum: { $cond: [{ $eq: ['$attendance.status', 2] }, 1, 0] }, 
 					},
 					totalHours: { $sum: 1 },
 					statuses: {
@@ -281,44 +269,24 @@ const studentDashboard = async (req, res) => {
 												$switch: {
 													branches: [
 														{
-															case: {
-																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2],
-															},
-															then: {
-																$ifNull: [timetable.timetable.monday, []],
-															},
+															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2] },
+															then: { $ifNull: [timetable.timetable.monday, []] },
 														},
 														{
-															case: {
-																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3],
-															},
-															then: {
-																$ifNull: [timetable.timetable.tuesday, []],
-															},
+															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3] },
+															then: { $ifNull: [timetable.timetable.tuesday, []] },
 														},
 														{
-															case: {
-																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4],
-															},
-															then: {
-																$ifNull: [timetable.timetable.wednesday, []],
-															},
+															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4] },
+															then: { $ifNull: [timetable.timetable.wednesday, []] },
 														},
 														{
-															case: {
-																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5],
-															},
-															then: {
-																$ifNull: [timetable.timetable.thursday, []],
-															},
+															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5] },
+															then: { $ifNull: [timetable.timetable.thursday, []] },
 														},
 														{
-															case: {
-																$eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6],
-															},
-															then: {
-																$ifNull: [timetable.timetable.friday, []],
-															},
+															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6] },
+															then: { $ifNull: [timetable.timetable.friday, []] },
 														},
 													],
 													default: [],
@@ -346,9 +314,7 @@ const studentDashboard = async (req, res) => {
 							$filter: {
 								input: '$statuses',
 								as: 'statusEntry',
-								cond: {
-									$eq: ['$$statusEntry.valid', true],
-								},
+								cond: { $eq: ['$$statusEntry.valid', true] },
 							},
 						},
 					},
@@ -359,8 +325,8 @@ const studentDashboard = async (req, res) => {
 								as: 'statusEntry',
 								cond: {
 									$and: [
-										{ $eq: ['$$statusEntry.valid', true] }, // Valid is true
-										{ $in: ['$$statusEntry.status', [1, 2]] }, // Status is present
+										{ $eq: ['$$statusEntry.valid', true] },
+										{ $in: ['$$statusEntry.status', [1, 2]] },
 									],
 								},
 							},
@@ -376,6 +342,7 @@ const studentDashboard = async (req, res) => {
 						$push: {
 							course: '$_id.course',
 							present: '$present',
+							OD: '$OD', 
 							totalHours: '$totalHours',
 							validHours: '$validHours',
 							validPresent: '$validPresent',
@@ -406,6 +373,7 @@ const studentDashboard = async (req, res) => {
 		res.status(500).json({ error: 'Internal Server Error' });
 	}
 };
+
 
 const FinalStudentData = async (req, res) => {
 	const { RegNo, startDate, endDate, coursecode } = req.body;
@@ -489,10 +457,93 @@ const deleteRecord = async (req, res) => {
 	}
 };
 
+const unmarkedAttendanceHours = async (req, res) => {
+	const { courses } = req.body;
+
+	if (!Array.isArray(courses) || courses.length === 0) {
+		return res.status(400).json({ message: 'Please provide a valid array of course codes' });
+	}
+
+	try {
+		const results = [];
+
+		for (const coursecode of courses) {
+			const timetable = await TimetableModel.findOne({ coursecode });
+			if (!timetable) {
+				results.push({ coursecode, unmarkedHours: null, pendingHours: [], message: 'No timetable found for the course' });
+				continue;
+			}
+
+			const ReportCollection = createReportCollection(coursecode);
+			const lastReport = await ReportCollection.findOne({}).sort({ date: -1 });
+			const lastDate = lastReport ? lastReport.date : null;
+
+			if (!lastDate) {
+				results.push({ coursecode, unmarkedHours: null, pendingHours: [], message: 'No attendance records found for the course' });
+				continue;
+			}
+
+			const currentDate = moment().startOf('day');
+			const startDate = moment(lastDate).add(1, 'days');
+			let unmarkedHours = 0;
+			let pendingHours = [];
+
+			for (let date = startDate; date.isBefore(currentDate); date.add(1, 'days')) {
+				const dayOfWeek = date.day();
+				let dayHours = [];
+
+				switch (dayOfWeek) {
+					case 1:
+						dayHours = timetable.timetable.monday || [];
+						break;
+					case 2:
+						dayHours = timetable.timetable.tuesday || [];
+						break;
+					case 3:
+						dayHours = timetable.timetable.wednesday || [];
+						break;
+					case 4:
+						dayHours = timetable.timetable.thursday || [];
+						break;
+					case 5:
+						dayHours = timetable.timetable.friday || [];
+						break;
+				}
+
+				for (const hour of dayHours) {
+					const attendanceRecorded = await ReportCollection.findOne({
+						date: date.toDate(),
+						hr: hour,
+					});
+					if (!attendanceRecorded) {
+						unmarkedHours += 1;
+						pendingHours.push({ date: date.format("YYYY-MM-DD"), hour });
+					}
+				}
+			}
+
+			results.push({
+				coursecode,
+				unmarkedHours,
+				pendingHours,
+				message: 'Unmarked attendance hours fetched successfully'
+			});
+		}
+
+		res.status(200).json(results);
+	} catch (error) {
+		console.error('Error fetching unmarked attendance hours:', error);
+		res.status(500).json({ message: 'Failed to fetch unmarked attendance hours' });
+	}
+};
+
+
+
 module.exports = {
 	updateAttendance,
 	fetchData,
 	studentDashboard,
 	FinalStudentData,
 	deleteRecord,
+	unmarkedAttendanceHours
 };

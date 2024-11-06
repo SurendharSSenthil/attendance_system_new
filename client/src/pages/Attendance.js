@@ -8,6 +8,7 @@ import {
 	Alert,
 	Statistic,
 	message,
+	Collapse
 } from "antd";
 import moment from "moment";
 import AttendanceTable from "../components/AttendanceTable";
@@ -30,6 +31,8 @@ const Attendance = () => {
 	const [count, setCount] = useState(0);
 	const [freeze, setFreeze] = useState(false);
 	const [exp, setExp] = useState(false);
+	const [pendingHours, setPendingHours] = useState(0); 
+	const [pendingdetails, setPendingdetails] = useState([]);
 
 	const handleDateChange = (date, dateString) => {
 		setCurrDate(moment(dateString, "YYYY-MM-DD"));
@@ -41,6 +44,7 @@ const Attendance = () => {
 
 	const handleCourseChange = (value) => {
 		setCourse(value);
+		fetchPendingHours(value); 
 	};
 
 	const fetchCourses = async () => {
@@ -62,6 +66,35 @@ const Attendance = () => {
 			setLoading(false);
 		}
 	};
+
+	// Function to fetch pending hours
+	const fetchPendingHours = async (selectedCourse) => {
+		setPendingdetails([])
+		try {
+		  const response = await fetch(`${url}/attendance/pending-hours`, {
+			method: "POST",
+			headers: {
+			  "Content-Type": "application/json",
+			  Authorization: `Bearer ${localStorage.getItem("token")}`,
+			},
+			body: JSON.stringify({
+			  courses: [selectedCourse],
+			}),
+		  });
+		  const result = await response.json();
+		  console.log(result); // Check the response data here
+		  if (response.ok) {
+			setPendingHours(result[0]?.unmarkedHours);
+			setPendingdetails(result[0]?.pendingHours);
+		  } else {
+			message.error(result.message);
+		  }
+		} catch (err) {
+		  message.error("Error fetching pending attendance hours.");
+		  console.error(err);
+		}
+	  };
+	  
 
 	const fetchAttendance = async () => {
 		if (!course || !Class || !yr || !currDate || hr.length === 0) {
@@ -117,6 +150,27 @@ const Attendance = () => {
 
 	return (
 		<div>
+			{pendingHours > 0 && (
+			<div>
+				<Alert
+				message={`Pending attendance hours to be marked: ${pendingHours}`}
+				type="warning"
+				showIcon
+				style={{ marginBottom: "16px" }}
+				className="font-semibold"
+				/>
+				<Collapse className="bg-yellow-50 mb-4">
+				<Collapse.Panel header="Pending Hours Details" key="1">
+					
+					{pendingdetails.length > 0 && pendingdetails.map((hr, index) => (
+						<p>{`${hr.date} : ${hr.hour} hour`}</p>
+					))}
+					
+				</Collapse.Panel>
+				</Collapse>
+			</div>
+			)}
+
 			<Row gutter={[16, 16]}>
 				<Col xs={24} sm={12} md={8}>
 					<Card>
@@ -128,10 +182,8 @@ const Attendance = () => {
 							disabledDate={(current) =>
 								current && current > moment().endOf("day")
 							}
-							// value={currDate}
 							format="YYYY-MM-DD"
 							className="w-full"
-							// getPopupContainer={(trigger) => trigger.parentNode}
 						/>{" "}
 					</Card>
 				</Col>
