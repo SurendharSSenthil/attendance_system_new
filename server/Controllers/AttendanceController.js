@@ -459,6 +459,7 @@ const deleteRecord = async (req, res) => {
 
 const unmarkedAttendanceHours = async (req, res) => {
 	const { courses } = req.body;
+	console.log(courses);
 
 	if (!Array.isArray(courses) || courses.length === 0) {
 		return res.status(400).json({ message: 'Please provide a valid array of course codes' });

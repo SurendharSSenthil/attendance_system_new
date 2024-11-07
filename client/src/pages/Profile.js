@@ -10,6 +10,7 @@ import {
 	Button,
 	message,
 	Modal,
+	Collapse
 } from "antd";
 import { useNavigate } from "react-router-dom";
 import { url } from "../Backendurl";
@@ -37,6 +38,8 @@ const Profile = ({ setAuth }) => {
 	const [profile, setProfile] = useState(null);
 	const [loading, setLoading] = useState(true);
 	const [modal, setModal] = useState(false);
+	const [pendingHours, setPendingHours] = useState({});
+	const [pendingDetails, setPendingDetails] = useState({});
 	const [cc, setCC] = useState("");
 	const navigate = useNavigate();
 	const backgroundColor_custom = `#${Math.floor(
@@ -65,6 +68,7 @@ const Profile = ({ setAuth }) => {
 
 			const data = await response.json();
 			setProfile(data);
+			await fetchPendingHours(data.user);
 			setLoading(false);
 			document.title = data?.fac?.username || "ATTENDANCE SYSTEM | PROFILE";
 		} catch (error) {
@@ -74,6 +78,37 @@ const Profile = ({ setAuth }) => {
 			document.title = "ATTENDANCE SYSTEM | PROFILE";
 		}
 	};
+
+	const fetchPendingHours = async (courses) => {
+        const coursePendingHours = {};
+		const coursependingDetails = {};
+        for (let course of courses) {
+            try {
+                const response = await fetch(`${url}/attendance/pending-hours`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                    body: JSON.stringify({ courses: [course.coursecode] }), 
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    coursePendingHours[course.coursecode] = data[0].unmarkedHours; 
+					coursependingDetails[course.coursecode] = data[0].pendingHours;
+                } else {
+                    message.error(`Failed to fetch pending hours for ${course.coursecode}`);
+                }
+            } catch (error) {
+                console.error("Error fetching pending hours:", error);
+            }
+        }
+
+        setPendingHours(coursePendingHours);
+		setPendingDetails(coursependingDetails);
+		console.log('pending details:', coursependingDetails);
+    };
 
 	const handleRemoveRep = async (rep, coursecode) => {
 		try {
@@ -229,6 +264,19 @@ const Profile = ({ setAuth }) => {
 						<List.Item>
 							<Text strong>Year:</Text> <Text>{course.dept}</Text>
 						</List.Item>
+						<List.Item>
+                            <Text strong>Pending Hours to mark the attendance:</Text>{" "}
+                            <Text>{pendingHours[course.coursecode] || "Loading..."}</Text> 
+                        </List.Item>
+						{pendingHours[course.coursecode] > 0 && <Collapse className="mb-4">
+							<Collapse.Panel header="Pending Hours Details" key="1">
+								
+								{pendingDetails[course.coursecode].length > 0 &&  pendingDetails[course.coursecode].map((hr, index) => (
+									<p>{`${hr.date} : ${hr.hour} hour`}</p>
+							))}
+						
+							</Collapse.Panel>
+						</Collapse>}
 						<List.Item>
 							<Text strong>Representative(s):</Text>{" "}
 							{reps[index]?.map((rep) => (
