@@ -266,7 +266,7 @@ const Profile = ({ setAuth }) => {
 						</List.Item>
 						<List.Item>
                             <Text strong>Pending Hours to mark the attendance:</Text>{" "}
-                            <Text>{pendingHours[course.coursecode] || "Loading..."}</Text> 
+                            <Text>{pendingHours[course.coursecode]  || pendingHours[course.coursecode] === 0 ? 0 : 'Loading...'}</Text> 
                         </List.Item>
 						{pendingHours[course.coursecode] > 0 && <Collapse className="mb-4">
 							<Collapse.Panel header="Pending Hours Details" key="1">
