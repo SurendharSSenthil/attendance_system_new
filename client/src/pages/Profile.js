@@ -107,7 +107,7 @@ const Profile = ({ setAuth }) => {
 
         setPendingHours(coursePendingHours);
 		setPendingDetails(coursependingDetails);
-		console.log('pending details:', coursependingDetails);
+		console.log('pending details:', coursependingDetails, pendingHours);
     };
 
 	const handleRemoveRep = async (rep, coursecode) => {
@@ -266,7 +266,12 @@ const Profile = ({ setAuth }) => {
 						</List.Item>
 						<List.Item>
                             <Text strong>Pending Hours to mark the attendance:</Text>{" "}
-                            <Text>{pendingHours[course.coursecode]  || pendingHours[course.coursecode] === 0 ? 0 : 'Loading...'}</Text> 
+                            <Text>{
+								pendingHours[course.coursecode] !== undefined
+									? pendingHours[course.coursecode]
+									: 'Loading...'
+								}
+							</Text> 
                         </List.Item>
 						{pendingHours[course.coursecode] > 0 && <Collapse className="mb-4">
 							<Collapse.Panel header="Pending Hours Details" key="1">
