@@ -141,6 +141,9 @@ const Students = () => {
 			'Total Hours',
 			'Present Hours',
 			'Percentage',
+			'Total hours as per timetable',
+			'Total present hours as per timetable',
+			'OD availed'
 		];
 
 		const rows = data.map((student) => [
@@ -161,6 +164,9 @@ const Students = () => {
 			...student.courses.map((course) =>
 				Math.round((course.present * 100) / course.totalHours)
 			),
+			...student.courses.map((course) => course.validHours),
+			...student.courses.map((course) => course.validPresent),
+			...student.courses.map((course) => course.OD),
 		]);
 		
 		const csvContent = [header, ...rows].map((e) => e.join(',')).join('\n');
