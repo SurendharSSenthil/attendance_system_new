@@ -34,17 +34,38 @@ const Students = () => {
 	const [course, setCourse] = useState('');
 	const [startRange, setStartRange] = useState();
 	const [endRange, setEndRange] = useState();
+	const [selectedDate, setSelectedDate] = useState([]);
+	const [useSingleDate, setUseSingleDate] = useState(false); 
 
 	const { RangePicker } = DatePicker;
 	const fetchStudentData = async () => {
-		if (!course || !yr || !Class || !startDate || !endDate) {
+		if (!course || !yr || !Class) {
 			message.error('Please input all the fields!');
 			setData([]);
 			return;
 		}
+		if((!startDate || !endDate) && !selectedDate) {
+			message.error('Please input either date range or single date!');
+            return;
+		}
 
 		setLoading(true);
 		setData([]);
+		const payload = {
+			coursecode: course,
+			yr,
+			Class,
+			startRange,
+			endRange,
+		};
+		if (useSingleDate && selectedDate) {
+			payload.isSingleDate = true;
+			payload.date = selectedDate;
+		} else  {
+			payload.startDate = startDate.format('YYYY-MM-DD');
+			payload.endDate = endDate.format('YYYY-MM-DD');
+		}
+
 		try {
 			const response = await fetch(`${url}/attendance/student-dashboard`, {
 				method: 'POST',
@@ -52,15 +73,7 @@ const Students = () => {
 					'Content-Type': 'application/json',
 					Authorization: `Bearer ${localStorage.getItem('token')}`,
 				},
-				body: JSON.stringify({
-					startDate: startDate.format('YYYY-MM-DD'),
-					endDate: endDate.format('YYYY-MM-DD'),
-					coursecode: course,
-					yr,
-					Class,
-					startRange,
-					endRange,
-				}),
+				body: JSON.stringify(payload),
 			});
 			if (!response.ok) {
 				throw new Error(
@@ -73,6 +86,7 @@ const Students = () => {
 			console.log(studentData);
 			setFilteredData(studentData);
 			setError(null);
+			setSelectedDate([]);
 		} catch (err) {
 			message.error(err.message);
 			console.error(err);
@@ -125,8 +139,28 @@ const Students = () => {
 			setStartDate(moment().startOf('day'));
 			setEndDate(moment().endOf('day'));
 		}
+		setUseSingleDate(false);
 		console.log(dates);
 	};
+
+
+	const handleDateChange2 = (date) => {
+		if (date) {
+			setUseSingleDate(true);
+			const dateString = date.format('YYYY-MM-DD'); 
+			
+			setSelectedDate((prev) => {
+				if (prev && prev.includes(dateString)) {
+					
+					return prev.filter((d) => d !== dateString);
+				} else {
+					
+					return prev ? [...prev, dateString] : [dateString];
+				}
+			});
+		}
+	};
+	
 
 	const exportToCSV = () => {
 		const header = [
@@ -340,6 +374,13 @@ const Students = () => {
 							<span className='text-red-500'>* </span>Select the Date Range
 						</p>
 						<RangePicker onChange={(e) => handleDateChange(e)} />
+					</Card>
+				</Col>
+				<Col xs={24} sm={12} md={8}>
+					<Card>
+						<p className='text-gray-500 mb-2'>Select the Dates(for specific date report)
+						</p>
+						<DatePicker onChange={(e) => handleDateChange2(e)} />
 					</Card>
 				</Col>
 				{courses.length > 0 && (

@@ -172,7 +172,17 @@ const fetchData = async (req, res) => {
 
 const studentDashboard = async (req, res) => {
 	try {
-		const { startDate, endDate, coursecode, yr, Class, startRange, endRange } = req.body;
+		const {
+			isSingleDate,
+			date,
+			startDate,
+			endDate,
+			coursecode,
+			yr,
+			Class,
+			startRange,
+			endRange,
+		} = req.body;
 
 		if (!coursecode) {
 			return res.status(400).json({ error: 'Course code is required' });
@@ -195,7 +205,7 @@ const studentDashboard = async (req, res) => {
 			startRange ? startRange - 1 : 0,
 			endRange ? endRange : totalStudents
 		);
-
+		console.log('SELECTED STUDENTS: ',selectedStudents, selectedStudents.length);
 		if (selectedStudents.length === 0) {
 			return res.status(404).json({ message: 'No students found in the specified range' });
 		}
@@ -208,15 +218,26 @@ const studentDashboard = async (req, res) => {
 
 		const ReportCollection = createReportCollection(coursecode);
 
+		// Build the date filter condition
+		let dateFilter = {};
+		if (isSingleDate && Array.isArray(date) && date.length > 0) {
+			dateFilter = { date: { $in: date.map((d) => new Date(d)) } };
+		} else {
+			dateFilter = {
+				date: {
+					$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
+					$lte: endDate ? new Date(endDate) : new Date(),
+				},
+			};
+		}
+		console.log(dateFilter)
+
 		// Aggregate data for student attendance and OD count
 		const result = await ReportCollection.aggregate([
 			{
 				$match: {
-					date: {
-						$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
-						$lte: endDate ? new Date(endDate) : new Date(),
-					},
-					'attendance.RegNo': { $in: selectedStudents },
+					...dateFilter,
+					
 				},
 			},
 			{ $unwind: '$attendance' },
@@ -239,7 +260,7 @@ const studentDashboard = async (req, res) => {
 						},
 					},
 					OD: {
-						$sum: { $cond: [{ $eq: ['$attendance.status', 2] }, 1, 0] }, 
+						$sum: { $cond: [{ $eq: ['$attendance.status', 2] }, 1, 0] },
 					},
 					totalHours: { $sum: 1 },
 					statuses: {
@@ -342,7 +363,7 @@ const studentDashboard = async (req, res) => {
 						$push: {
 							course: '$_id.course',
 							present: '$present',
-							OD: '$OD', 
+							OD: '$OD',
 							totalHours: '$totalHours',
 							validHours: '$validHours',
 							validPresent: '$validPresent',
@@ -366,14 +387,13 @@ const studentDashboard = async (req, res) => {
 			},
 		]);
 
-		console.log(result, result.length);
+		console.log( result.length);
 		res.status(200).json(result);
 	} catch (err) {
 		console.error('Error fetching student dashboard data:', err);
 		res.status(500).json({ error: 'Internal Server Error' });
 	}
 };
-
 
 const FinalStudentData = async (req, res) => {
 	const { RegNo, startDate, endDate, coursecode } = req.body;
