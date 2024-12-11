@@ -247,11 +247,11 @@ const Students = () => {
 							return 'P'; // Present
 						} else if (statusValue === 2) {
 							return <span className='text-yellow-500 font-semibold'>OD</span>; // On Duty
-						} else {
+						} else if(statusValue === -1) {
 							return <span className='text-red-500 font-semibold'>AB</span>; // Absent
 						}
 					} else {
-						return '-'; // Default return if no course data
+						return <span className='text-red-500 font-semibold'>-</span>;// Default return if no course data
 					}
 				},
 			});

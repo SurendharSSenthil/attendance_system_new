@@ -324,93 +324,103 @@ const studentDashboard = async (req, res) => {
 		  },
 		},
 		{
-		  $addFields: {
-			statuses: {
-			  $map: {
-				input: '$statuses',
-				as: 'statusEntry',
-				in: {
-				  date: '$$statusEntry.date',
-				  hour: '$$statusEntry.hour',
-				  status: '$$statusEntry.status',
-				  valid: {
-					$let: {
-					  vars: {
-						dayOfWeek: { $dayOfWeek: '$$statusEntry.date' },
-						timetableHours: {
-						  $switch: {
-							branches: [
-							  {
-								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2] },
-								then: { $ifNull: [timetable.timetable.monday, []] },
+			$addFields: {
+				statuses: {
+				  $map: {
+					input: '$statuses',
+					as: 'statusEntry',
+					in: {
+					  date: '$$statusEntry.date',
+					  hour: '$$statusEntry.hour',
+					  status: '$$statusEntry.status',
+					  valid: {
+						$let: {
+						  vars: {
+							dayOfWeek: { $dayOfWeek: '$$statusEntry.date' },
+							timetableHours: {
+							  $switch: {
+								branches: [
+								  {
+									case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2] },
+									then: { $ifNull: [timetable.timetable.monday, []] },
+								  },
+								  {
+									case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3] },
+									then: { $ifNull: [timetable.timetable.tuesday, []] },
+								  },
+								  {
+									case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4] },
+									then: { $ifNull: [timetable.timetable.wednesday, []] },
+								  },
+								  {
+									case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5] },
+									then: { $ifNull: [timetable.timetable.thursday, []] },
+								  },
+								  {
+									case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6] },
+									then: { $ifNull: [timetable.timetable.friday, []] },
+								  },
+								],
+								default: [],
 							  },
-							  {
-								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3] },
-								then: { $ifNull: [timetable.timetable.tuesday, []] },
-							  },
-							  {
-								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4] },
-								then: { $ifNull: [timetable.timetable.wednesday, []] },
-							  },
-							  {
-								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5] },
-								then: { $ifNull: [timetable.timetable.thursday, []] },
-							  },
-							  {
-								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6] },
-								then: { $ifNull: [timetable.timetable.friday, []] },
-							  },
+							},
+						  },
+						  in: {
+							$cond: [
+							  { $in: ['$$statusEntry.hour', '$$timetableHours'] },
+							  true,
+							  false,
 							],
-							default: [],
 						  },
 						},
 					  },
-					  in: {
-						$cond: [
-						  { $in: ['$$statusEntry.hour', '$$timetableHours'] },
-						  true,
-						  false,
-						],
+					},
+				  },
+				},
+			  },
+		  },
+		  {
+			$addFields: {
+			  validHours: {
+				$sum: {
+				  $map: {
+					input: '$statuses',
+					as: 'statusEntry',
+					in: {
+					  $cond: [
+						{
+						  $and: [
+							{ $eq: ['$$statusEntry.valid', true] },
+							{ $gte: [{$toDate: '$$statusEntry.date'}, {$toDate: '$sd'}] }
+						  ]
+						},
+						1,  
+						0   
+					  ]
+					}
+				  }
+				}
+			  }
+			}
+		  },		  
+		  {
+			$addFields: {
+				validPresent: {
+					$size: {
+					  $filter: {
+						input: '$statuses',
+						as: 'statusEntry',
+						cond: {
+						  $and: [
+							{ $gte: ['$$statusEntry.date', '$sd'] }, 
+							{ $eq: ['$$statusEntry.valid', true] }, 
+							{ $in: ['$$statusEntry.status', [1, 2]] }, 
+						  ],
+						},
 					  },
 					},
 				  },
-				},
-			  },
-			},
-		  },
-		},
-		{
-			$addFields: {
-			  validHours: {
-				$size: {
-				  $filter: {
-					input: '$statuses',
-					as: 'statusEntry',
-					cond: {
-					  $and: [
-						{ $gte: [{$toDate: '$$statusEntry.date'},  { $toDate: '$sd' }] }, 
-						{ $eq: ['$$statusEntry.valid', true] } 
-					  ],
-					},
-				  },
-				},
-			  },
-			  validPresent: {
-				$size: {
-				  $filter: {
-					input: '$statuses',
-					as: 'statusEntry',
-					cond: {
-					  $and: [
-						{ $gte: ['$$statusEntry.date', '$sd'] }, 
-						{ $eq: ['$$statusEntry.valid', true] }, 
-						{ $in: ['$$statusEntry.status', [1, 2]] }, 
-					  ],
-					},
-				  },
-				},
-			  },
-			},
+			}
 		  },		  
 		{
 		  $group: {
@@ -451,8 +461,6 @@ const studentDashboard = async (req, res) => {
 	  res.status(500).json({ error: 'Internal Server Error' });
 	}
   };
-  
-
 
 const FinalStudentData = async (req, res) => {
 	const { RegNo, startDate, endDate, coursecode } = req.body;
