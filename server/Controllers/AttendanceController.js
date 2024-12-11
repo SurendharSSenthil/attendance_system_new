@@ -3,7 +3,7 @@ const createStudentCollection = require('../Models/studentModel');
 const classmodel = require('../Models/courseModel');
 const TimetableModel = require('../Models/timetableModel');
 const moment = require('moment');
-
+const mongoose = require('mongoose');
 const updateAttendance = async (req, res) => {
 	const { coursecode, coursename, facname, date, hr, attendance } = req.body;
 
@@ -172,228 +172,287 @@ const fetchData = async (req, res) => {
 
 const studentDashboard = async (req, res) => {
 	try {
-		const {
-			isSingleDate,
-			date,
-			startDate,
-			endDate,
-			coursecode,
-			yr,
-			Class,
-			startRange,
-			endRange,
-		} = req.body;
-
-		if (!coursecode) {
-			return res.status(400).json({ error: 'Course code is required' });
-		}
-
-		// Fetch class data based on coursecode, year, and class
-		const data = await classmodel.findOne({
-			coursecode,
-			dept: yr,
-			class: Class,
-		});
-		if (!data) {
-			return res.status(404).json({ message: 'No students found! Please check the input fields' });
-		}
-
-		const totalStudents = data.students.length;
-
-		// Select students based on startRange and endRange
-		const selectedStudents = data.students.slice(
-			startRange ? startRange - 1 : 0,
-			endRange ? endRange : totalStudents
-		);
-		console.log('SELECTED STUDENTS: ',selectedStudents, selectedStudents.length);
-		if (selectedStudents.length === 0) {
-			return res.status(404).json({ message: 'No students found in the specified range' });
-		}
-
-		// Find the timetable for the course
-		const timetable = await TimetableModel.findOne({ coursecode });
-		if (!timetable) {
-			return res.status(404).json({ message: 'No timetable found for the course' });
-		}
-
-		const ReportCollection = createReportCollection(coursecode);
-
-		// Build the date filter condition
-		let dateFilter = {};
-		if (isSingleDate && Array.isArray(date) && date.length > 0) {
-			dateFilter = { date: { $in: date.map((d) => new Date(d)) } };
-		} else {
-			dateFilter = {
-				date: {
-					$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
-					$lte: endDate ? new Date(endDate) : new Date(),
-				},
-			};
-		}
-		console.log(dateFilter)
-
-		// Aggregate data for student attendance and OD count
-		const result = await ReportCollection.aggregate([
-			{
-				$match: {
-					...dateFilter,
-					
-				},
+	  const {
+		isSingleDate,
+		date,
+		startDate,
+		endDate,
+		coursecode,
+		yr,
+		Class,
+		startRange,
+		endRange,
+	  } = req.body;
+  
+	  if (!coursecode) {
+		return res.status(400).json({ error: 'Course code is required' });
+	  }
+  
+	  // Fetch class data based on coursecode, year, and class
+	  const data = await classmodel.findOne({
+		coursecode,
+		dept: yr,
+		class: Class,
+	  });
+	  if (!data) {
+		return res.status(404).json({ message: 'No students found! Please check the input fields' });
+	  }
+  
+	  const totalStudents = data.students.length;
+  
+	  // Select students based on startRange and endRange
+	  const selectedStudents = data.students.slice(
+		startRange ? startRange - 1 : 0,
+		endRange ? endRange : totalStudents
+	  );
+	  console.log('SELECTED STUDENTS: ', selectedStudents, selectedStudents.length);
+	  if (selectedStudents.length === 0) {
+		return res.status(404).json({ message: 'No students found in the specified range' });
+	  }
+  
+	  // Reference the `students_<coursecode>` collection
+	  const StudentsCollection = createStudentCollection(coursecode);
+  
+	  // Fetch the `sd` for each selected student by using $lookup to join student data
+	  const studentData = await StudentsCollection.aggregate([
+		{
+		  $match: {
+			RegNo: { $in: selectedStudents },
+		  },
+		},
+		{
+		  $project: {
+			RegNo: 1,
+			sd: { $ifNull:[  "$sd" , new Date("1970-01-01")] }, // Ensure sd is a valid date
+		  },
+		},
+	  ]);
+    
+	  // Find the timetable for the course
+	  const timetable = await TimetableModel.findOne({ coursecode });
+	  if (!timetable) {
+		return res.status(404).json({ message: 'No timetable found for the course' });
+	  }
+  
+	  const ReportCollection = createReportCollection(coursecode);
+  
+	  // Build the date filter condition
+	  let dateFilter = {};
+	  if (isSingleDate && Array.isArray(date) && date.length > 0) {
+		dateFilter = { date: { $in: date.map((d) => new Date(d)) } };
+	  } else {
+		dateFilter = {
+		  date: {
+			$gte: startDate ? new Date(startDate) : new Date('1970-01-01'),
+			$lte: endDate ? new Date(endDate) : new Date(),
+		  },
+		};
+	  }
+	  console.log(dateFilter);
+	  console.log(StudentsCollection.collection.collectionName)
+	  // Aggregate data for student attendance and OD count with $lookup for joining student collection
+	  const result = await ReportCollection.aggregate([
+		{
+			$sort: {date: 1, hr: 1},
+		},
+		{
+		  $match: {
+			...dateFilter,
+		  },
+		},
+		{ $unwind: '$attendance' },
+		{
+		  $match: {
+			freeze: { $eq: true },
+			'attendance.RegNo': { $in: selectedStudents },
+		  },
+		},
+		{
+		  $lookup: {
+			from: StudentsCollection.collection.name,
+			localField: 'attendance.RegNo',
+			foreignField: 'RegNo',
+			as: 'studentData',
+		  },
+		},
+		{
+		  $unwind: {
+			path: '$studentData',
+			preserveNullAndEmptyArrays: true,
+		  },
+		},
+		{
+		  $addFields: {
+			sd: { $ifNull: [{ $toDate: '$studentData.sd' }, new Date('1970-01-01')] },
+		  },
+		},
+		{
+		  $group: {
+			_id: {
+			  RegNo: '$attendance.RegNo',
+			  Name: '$attendance.Name',
+			  course: '$coursecode',
 			},
-			{ $unwind: '$attendance' },
-			{
-				$match: {
-					freeze: { $eq: true },
-					'attendance.RegNo': { $in: selectedStudents },
-				},
+			present: {
+			  $sum: {
+				$cond: [
+				  { $in: ['$attendance.status', [1, 2]] },
+				  1,
+				  0,
+				],
+			  },
 			},
-			{
-				$group: {
-					_id: {
-						RegNo: '$attendance.RegNo',
-						Name: '$attendance.Name',
-						course: '$coursecode',
-					},
-					present: {
-						$sum: {
-							$cond: [{ $in: ['$attendance.status', [1, 2]] }, 1, 0],
+			OD: {
+			  $sum: { $cond: [{ $eq: ['$attendance.status', 2] }, 1, 0] },
+			},
+			totalHours: {
+			  $sum: {
+				$cond: [
+				  { $gte: ["$date", '$sd'] },
+				  1,
+				  0,
+				],
+			  },
+			},
+			statuses: {
+			  $push: {
+				date: '$date',
+				hour: '$hr',
+				status: '$attendance.status',
+			  },
+			},
+		  },
+		},
+		{
+		  $addFields: {
+			statuses: {
+			  $map: {
+				input: '$statuses',
+				as: 'statusEntry',
+				in: {
+				  date: '$$statusEntry.date',
+				  hour: '$$statusEntry.hour',
+				  status: '$$statusEntry.status',
+				  valid: {
+					$let: {
+					  vars: {
+						dayOfWeek: { $dayOfWeek: '$$statusEntry.date' },
+						timetableHours: {
+						  $switch: {
+							branches: [
+							  {
+								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2] },
+								then: { $ifNull: [timetable.timetable.monday, []] },
+							  },
+							  {
+								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3] },
+								then: { $ifNull: [timetable.timetable.tuesday, []] },
+							  },
+							  {
+								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4] },
+								then: { $ifNull: [timetable.timetable.wednesday, []] },
+							  },
+							  {
+								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5] },
+								then: { $ifNull: [timetable.timetable.thursday, []] },
+							  },
+							  {
+								case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6] },
+								then: { $ifNull: [timetable.timetable.friday, []] },
+							  },
+							],
+							default: [],
+						  },
 						},
+					  },
+					  in: {
+						$cond: [
+						  { $in: ['$$statusEntry.hour', '$$timetableHours'] },
+						  true,
+						  false,
+						],
+					  },
 					},
-					OD: {
-						$sum: { $cond: [{ $eq: ['$attendance.status', 2] }, 1, 0] },
-					},
-					totalHours: { $sum: 1 },
-					statuses: {
-						$push: {
-							date: '$date',
-							hour: '$hr',
-							status: '$attendance.status',
-						},
-					},
+				  },
 				},
+			  },
 			},
-			{
-				$addFields: {
-					statuses: {
-						$map: {
-							input: '$statuses',
-							as: 'statusEntry',
-							in: {
-								date: '$$statusEntry.date',
-								hour: '$$statusEntry.hour',
-								status: '$$statusEntry.status',
-								valid: {
-									$let: {
-										vars: {
-											dayOfWeek: { $dayOfWeek: '$$statusEntry.date' },
-											timetableHours: {
-												$switch: {
-													branches: [
-														{
-															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 2] },
-															then: { $ifNull: [timetable.timetable.monday, []] },
-														},
-														{
-															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 3] },
-															then: { $ifNull: [timetable.timetable.tuesday, []] },
-														},
-														{
-															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 4] },
-															then: { $ifNull: [timetable.timetable.wednesday, []] },
-														},
-														{
-															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 5] },
-															then: { $ifNull: [timetable.timetable.thursday, []] },
-														},
-														{
-															case: { $eq: [{ $dayOfWeek: '$$statusEntry.date' }, 6] },
-															then: { $ifNull: [timetable.timetable.friday, []] },
-														},
-													],
-													default: [],
-												},
-											},
-										},
-										in: {
-											$cond: [
-												{ $in: ['$$statusEntry.hour', '$$timetableHours'] },
-												true,
-												false,
-											],
-										},
-									},
-								},
-							},
-						},
+		  },
+		},
+		{
+			$addFields: {
+			  validHours: {
+				$size: {
+				  $filter: {
+					input: '$statuses',
+					as: 'statusEntry',
+					cond: {
+					  $and: [
+						{ $gte: [{$toDate: '$$statusEntry.date'},  { $toDate: '$sd' }] }, 
+						{ $eq: ['$$statusEntry.valid', true] } 
+					  ],
 					},
+				  },
 				},
-			},
-			{
-				$addFields: {
-					validHours: {
-						$size: {
-							$filter: {
-								input: '$statuses',
-								as: 'statusEntry',
-								cond: { $eq: ['$$statusEntry.valid', true] },
-							},
-						},
+			  },
+			  validPresent: {
+				$size: {
+				  $filter: {
+					input: '$statuses',
+					as: 'statusEntry',
+					cond: {
+					  $and: [
+						{ $gte: ['$$statusEntry.date', '$sd'] }, 
+						{ $eq: ['$$statusEntry.valid', true] }, 
+						{ $in: ['$$statusEntry.status', [1, 2]] }, 
+					  ],
 					},
-					validPresent: {
-						$size: {
-							$filter: {
-								input: '$statuses',
-								as: 'statusEntry',
-								cond: {
-									$and: [
-										{ $eq: ['$$statusEntry.valid', true] },
-										{ $in: ['$$statusEntry.status', [1, 2]] },
-									],
-								},
-							},
-						},
-					},
+				  },
 				},
+			  },
 			},
-			{
-				$group: {
-					_id: '$_id.RegNo',
-					Name: { $first: '$_id.Name' },
-					courses: {
-						$push: {
-							course: '$_id.course',
-							present: '$present',
-							OD: '$OD',
-							totalHours: '$totalHours',
-							validHours: '$validHours',
-							validPresent: '$validPresent',
-							statuses: '$statuses',
-						},
-					},
-				},
+		  },		  
+		{
+		  $group: {
+			_id: '$_id.RegNo',
+			Name: { $first: '$_id.Name' },
+			courses: {
+			  $push: {
+				course: '$_id.course',
+				present: '$present',
+				OD: '$OD',
+				totalHours: '$totalHours',
+				validHours: '$validHours',
+				validPresent: '$validPresent',
+				statuses: '$statuses',
+			  },
 			},
-			{
-				$project: {
-					_id: 0,
-					RegNo: '$_id',
-					name: '$Name',
-					courses: 1,
-				},
-			},
-			{
-				$sort: {
-					RegNo: 1,
-				},
-			},
-		]);
-
-		console.log( result.length);
-		res.status(200).json(result);
+		  },
+		},
+		{
+		  $project: {
+			_id: 0,
+			RegNo: '$_id',
+			name: '$Name',
+			courses: 1,
+		  },
+		},
+		{
+		  $sort: {
+			RegNo: 1,
+		  },
+		},
+	  ]);
+  
+	  console.log(result, result.length);
+	  res.status(200).json(result);
 	} catch (err) {
-		console.error('Error fetching student dashboard data:', err);
-		res.status(500).json({ error: 'Internal Server Error' });
+	  console.error('Error fetching student dashboard data:', err);
+	  res.status(500).json({ error: 'Internal Server Error' });
 	}
-};
+  };
+  
+
 
 const FinalStudentData = async (req, res) => {
 	const { RegNo, startDate, endDate, coursecode } = req.body;

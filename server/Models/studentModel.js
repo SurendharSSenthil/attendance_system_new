@@ -11,6 +11,7 @@ const createStudentCollection = (courseCode) => {
 		{
 			RegNo: { type: String, required: true },
 			StdName: { type: String, required: true },
+			sd: {type: Date},
 		},
 		{
 			timestamps: true,

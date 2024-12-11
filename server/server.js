@@ -25,7 +25,7 @@ app.use((req, res, next) => {
 	const currentDateTime = new Date().toLocaleString('en-IN', {
 		timeZone: 'Asia/Kolkata',
 	});
-	const clientIp = req.headers['x-forwarded-for'] || req.ip;
+	const clientIp = req.headers['x-forwarded-for'] || req;
 	const method = req.method;
 
 	const methodColors = {
@@ -43,7 +43,7 @@ app.use((req, res, next) => {
 		colorize(
 			`Request Method: ${method}, Request Path: ${
 				req.path
-			}, Request Time: ${currentDateTime}, Request IP: ${req.get('host')}`
+			}, Request Time: ${currentDateTime}, Request IP: ${clientIp.ip}`,
 		)
 	);
 
@@ -92,6 +92,6 @@ app.use('/api/students', facultyRoutes);
 app.use('/api/attendance', attendanceRoutes);
 app.use('/api/admin', adminRoutes);
 
-// app.get("/api", console.log("Hello world"));
+app.get("/api", (req, res) => res.send("Hello world"));
 
 app.listen(port, () => console.log(`Server started on port ${port}`));

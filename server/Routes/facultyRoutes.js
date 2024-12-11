@@ -99,7 +99,7 @@ router.get('/:coursecode', authenticateToken, async (req, res) => {
 });
 
 router.post('/add-student', authenticateToken, async (req, res) => {
-	const { StdName, RegNo, coursecode } = req.body;
+	const { StdName, RegNo, coursecode, sd } = req.body;
 
 	if (!StdName || !RegNo || !coursecode) {
 		return res.status(404).json({ message: 'Enter all fields' });
@@ -114,7 +114,7 @@ router.post('/add-student', authenticateToken, async (req, res) => {
 			return res.status(400).json({ message: 'User already exists!' });
 		}
 
-		const newStudent = new StudentModel({ RegNo, StdName });
+		const newStudent = new StudentModel({ RegNo, StdName, sd });
 
 		const savedStudent = await newStudent.save();
 
